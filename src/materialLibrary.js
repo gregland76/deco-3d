@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 export function loadPBRMaterial(textureLoader, materialId) {
-  const base = `${import.meta.env.BASE_URL}materials/${materialId}`;
+  const base = `./materials/${materialId}`;
 
   const baseColor = textureLoader.load(`${base}/basecolor.jpg`);
   const normal = textureLoader.load(`${base}/normal.jpg`);

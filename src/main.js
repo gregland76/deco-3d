@@ -39,8 +39,8 @@ const pmrem = new THREE.PMREMGenerator(renderer);
 pmrem.compileEquirectangularShader();
 
 new RGBELoader()
-  .setPath(`${import.meta.env.BASE_URL}hdr/`)
-  .load("studio.hdr", (hdrTex) => {
+  .setPath("./hdr/")
+  .load("outdoor.hdr", (hdrTex) => {
     const envMap = pmrem.fromEquirectangular(hdrTex).texture;
 
     scene.environment = envMap; // lighting/reflections
