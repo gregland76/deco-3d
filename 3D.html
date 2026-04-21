@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>Déco 3D - V0</title>
+    <style>
+      html, body { height: 100%; margin: 0; overflow: hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+      #app { height: 100%; }
+
+      #panel {
+        position: fixed;
+        left: 12px;
+        bottom: 12px;
+        width: min(210px, calc(100vw - 24px));
+        max-height: min(72vh, 620px);
+        overflow: auto;
+        padding: 12px;
+        border-radius: 14px;
+        background: rgba(16, 18, 22, 0.72);
+        color: #fff;
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+      #panel h2 { margin: 0 0 8px 0; font-size: 14px; opacity: 0.9; }
+
+      details {
+        border-radius: 12px;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.06);
+        margin-bottom: 10px;
+      }
+      summary {
+        cursor: pointer;
+        padding: 10px 12px;
+        font-weight: 650;
+        font-size: 14px;
+        list-style: none;
+      }
+      summary::-webkit-details-marker { display:none; }
+
+      .group { padding: 10px 12px 12px 12px; }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+        margin: 10px 0;
+        width: 100%;
+      }
+      .label { font-size: 13px; opacity: 0.95; }
+      .pct { font-variant-numeric: tabular-nums; font-size: 12px; opacity: 0.9; }
+      .slider { width: 100%; margin-top: 6px; }
+      .hint { font-size: 12px; opacity: 0.8; line-height: 1.35; }
+
+
+      .btn {
+        background: rgba(16, 18, 22, 0.65);
+        border: 1px solid rgba(255,255,255,0.10);
+        color: #fff;
+        padding: 8px 10px;
+        border-radius: 10px;
+        font-size: 13px;
+        cursor: pointer;
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+      }
+
+      .panel-reset {
+        width: 100%;
+        margin-top: 10px;
+      }
+
+/* Bouton toggle UI */
+#uiToggle {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 10000;
+
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.45);
+  color: rgba(255,255,255,0.92);
+  font: 13px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+/* Par défaut: on laisse le panneau visible */
+#panel {
+  transition: transform 180ms ease, opacity 180ms ease;
+}
+
+/* Etat caché (on décale hors écran) */
+body.ui-collapsed #panel {
+  transform: translateX(-110%);
+  opacity: 0.0;
+  pointer-events: none;
+}
+
+body.embed-ui-hidden #panel,
+body.embed-ui-hidden #topbar,
+body.embed-ui-hidden #uiToggle {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.embed-ui-hidden #panel {
+  transform: translateX(-110%);
+}
+
+/* Ajustements mobile */
+@media (max-width: 520px) {
+  /* Panneau plus petit */
+  #panel {
+    width: min(140px, 60vw);
+    font-size: 12px;
+  }
+
+  /* Sliders plus fins */
+  #panel input[type="range"] {
+    height: 18px;
+  }
+
+  /* Labels plus compacts si tu en as */
+  #panel label {
+    font-size: 12px;
+  }
+}
+
+
+
+  
+    </style>
+  </head>
+  <body>
+    <button id="uiToggle" aria-expanded="true" aria-controls="panel">
+  Curseurs ON/OFF
+</button>
+
+<div id="app"></div>
+
+    <div id="panel">
+      <h2>Mix matières (V0 sans textures)</h2>
+
+      <details open>
+        <summary>Murs (tous)</summary>
+        <div class="group" id="group-walls"></div>
+      </details>
+
+      <details>
+        <summary>Sols (tous)</summary>
+        <div class="group" id="group-floors"></div>
+      </details>
+
+      <details>
+        <summary>Toit (tous)</summary>
+        <div class="group" id="group-roofs"></div>
+      </details>
+
+      <div class="hint">
+        Déplace un curseur : les autres s’ajustent pour garder 100%.
+      </div>
+      <button class="btn panel-reset" id="resetBtn">Réinitialiser</button>
+    </div>
+
+    <!-- Accordéon : un seul details ouvert à la fois -->
+    <script>
+      const allDetails = document.querySelectorAll('#panel details');
+      allDetails.forEach(detail => {
+        detail.addEventListener('toggle', () => {
+          if (detail.open) {
+            allDetails.forEach(other => {
+              if (other !== detail) other.removeAttribute('open');
+            });
+          }
+        });
+      });
+    </script>
+    <script type="module" src="/src/main.js"></script>
+    
+  </body>
+</html>

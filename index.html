@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Frame - Déco 3D</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --frame-size: 100px;
+        --page-bg: radial-gradient(circle at top left, #3d5266 0%, #1f2933 42%, #10161d 100%);
+        --panel-bg: rgba(7, 12, 18, 0.72);
+        --panel-border: rgba(255, 255, 255, 0.12);
+        --text-main: #f3f5f7;
+        --text-muted: rgba(243, 245, 247, 0.72);
+        --button-bg: rgba(13, 19, 27, 0.78);
+        --button-hover: rgba(28, 40, 54, 0.96);
+        --shadow-soft: 0 22px 48px rgba(0, 0, 0, 0.34);
+        --shadow-strong: 0 28px 120px rgba(0, 0, 0, 0.55);
+        --radius-card: 22px;
+        --radius-frame: 18px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--page-bg);
+        color: var(--text-main);
+        font-family: "Avenir Next", "Segoe UI", sans-serif;
+      }
+
+      main {
+        width: min(100%, 1240px);
+      }
+
+      .viewer-grid {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        width: 100%;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 20px;
+        align-items: start;
+      }
+
+      .viewer-card {
+        display: grid;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .viewer-label {
+        margin: 0;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+
+      .frame-shell {
+        position: relative;
+        display: grid;
+        gap: 20px;
+        justify-items: start;
+        padding: 28px;
+        border: 1px solid var(--panel-border);
+        border-radius: var(--radius-card);
+        background: linear-gradient(145deg, rgba(12, 18, 25, 0.9), rgba(11, 16, 24, 0.72));
+        box-shadow: var(--shadow-soft);
+        overflow: clip;
+      }
+
+      .frame-shell::before {
+        content: "";
+        position: absolute;
+        inset: -20% auto auto -10%;
+        width: 260px;
+        height: 260px;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(146, 180, 208, 0.24) 0%, rgba(146, 180, 208, 0) 72%);
+        pointer-events: none;
+      }
+
+      .frame-copy {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 8px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(28px, 5vw, 46px);
+        line-height: 0.96;
+        letter-spacing: -0.04em;
+      }
+
+      .frame-copy p {
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 15px;
+        line-height: 1.5;
+      }
+
+      .viewer {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        aspect-ratio: 1;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: var(--radius-frame);
+        overflow: hidden;
+        background: rgba(6, 8, 12, 0.9);
+        box-shadow: var(--shadow-soft);
+        transition: width 220ms ease, height 220ms ease, border-radius 220ms ease, box-shadow 220ms ease;
+      }
+
+      .viewer iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #111;
+        pointer-events: none;
+      }
+
+      .viewer.is-expanded {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        border: 0;
+        box-shadow: var(--shadow-strong);
+      }
+
+      .viewer.is-expanded iframe {
+        pointer-events: auto;
+      }
+
+      .frame-toggle {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1001;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 999px;
+        background: var(--button-bg);
+        color: var(--text-main);
+        cursor: pointer;
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        transition: background-color 180ms ease, transform 180ms ease, border-color 180ms ease;
+      }
+
+      .frame-toggle:hover,
+      .frame-toggle:focus-visible {
+        background: var(--button-hover);
+        border-color: rgba(255, 255, 255, 0.28);
+        outline: none;
+      }
+
+      .frame-toggle:active {
+        transform: scale(0.96);
+      }
+
+      .frame-toggle svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .frame-toggle .icon-collapse {
+        display: none;
+      }
+
+      .viewer.is-expanded .frame-toggle .icon-expand {
+        display: none;
+      }
+
+      .viewer.is-expanded .frame-toggle .icon-collapse {
+        display: block;
+      }
+
+      .frame-note {
+        position: relative;
+        z-index: 1;
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 13px;
+      }
+
+      body.has-overlay {
+        overflow: hidden;
+      }
+
+      .page-credit {
+        position: fixed;
+        left: 50%;
+        bottom: 14px;
+        z-index: 1100;
+        transform: translateX(-50%);
+        text-align: center;
+        font: 13px/1.3 "Avenir Next", "Segoe UI", sans-serif;
+        color: rgba(243, 245, 247, 0.9);
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 10px;
+        padding: 8px 12px;
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+        pointer-events: none;
+      }
+
+      .page-credit strong {
+        font-weight: 650;
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding: 14px;
+        }
+
+        .frame-shell {
+          padding: 18px;
+        }
+
+        .viewer-grid {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+
+        .page-credit {
+          width: calc(100vw - 28px);
+          max-width: 460px;
+          font-size: 12px;
+        }
+      }
+
+      @media (max-width: 980px) {
+        .viewer-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="frame-shell" aria-labelledby="frame-title">
+        <div class="frame-copy">
+          <h1 id="frame-title">Projet Manue</h1>
+          <p>Cette page affiche la scène existante dans une vignette compacte et permet de l’agrandir à la demande sans toucher au comportement principal de la page 3D.</p>
+        </div>
+
+        <div class="viewer-grid">
+          <article class="viewer-card">
+            <p class="viewer-label">Maison 1</p>
+            <div class="viewer" data-viewer>
+              <button class="frame-toggle" type="button" aria-label="Agrandir la vignette Maison 1" aria-expanded="false">
+                <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M8 4H4v4" />
+                  <path d="M4 4l6 6" />
+                  <path d="M16 20h4v-4" />
+                  <path d="M20 20l-6-6" />
+                  <path d="M20 8V4h-4" />
+                  <path d="M20 4l-6 6" />
+                  <path d="M4 16v4h4" />
+                  <path d="M4 20l6-6" />
+                </svg>
+                <svg class="icon-collapse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 15H4v5" />
+                  <path d="M4 20l7-7" />
+                  <path d="M15 9h5V4" />
+                  <path d="M20 4l-7 7" />
+                  <path d="M15 15h5v5" />
+                  <path d="M20 20l-7-7" />
+                  <path d="M9 9H4V4" />
+                  <path d="M4 4l7 7" />
+                </svg>
+              </button>
+              <iframe src="./3D.html?embed=1&variant=classic" title="Prévisualisation Déco 3D maison 1"></iframe>
+            </div>
+          </article>
+
+          <article class="viewer-card">
+            <p class="viewer-label">Maison 2</p>
+            <div class="viewer" data-viewer>
+              <button class="frame-toggle" type="button" aria-label="Agrandir la vignette Maison 2" aria-expanded="false">
+                <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M8 4H4v4" />
+                  <path d="M4 4l6 6" />
+                  <path d="M16 20h4v-4" />
+                  <path d="M20 20l-6-6" />
+                  <path d="M20 8V4h-4" />
+                  <path d="M20 4l-6 6" />
+                  <path d="M4 16v4h4" />
+                  <path d="M4 20l6-6" />
+                </svg>
+                <svg class="icon-collapse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 15H4v5" />
+                  <path d="M4 20l7-7" />
+                  <path d="M15 9h5V4" />
+                  <path d="M20 4l-7 7" />
+                  <path d="M15 15h5v5" />
+                  <path d="M20 20l-7-7" />
+                  <path d="M9 9H4V4" />
+                  <path d="M4 4l7 7" />
+                </svg>
+              </button>
+              <iframe src="./3D.html?embed=1&variant=atrium" title="Prévisualisation Déco 3D maison 2"></iframe>
+            </div>
+          </article>
+
+          <article class="viewer-card">
+            <p class="viewer-label">Maison 3</p>
+            <div class="viewer" data-viewer>
+              <button class="frame-toggle" type="button" aria-label="Agrandir la vignette Maison 3" aria-expanded="false">
+                <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M8 4H4v4" />
+                  <path d="M4 4l6 6" />
+                  <path d="M16 20h4v-4" />
+                  <path d="M20 20l-6-6" />
+                  <path d="M20 8V4h-4" />
+                  <path d="M20 4l-6 6" />
+                  <path d="M4 16v4h4" />
+                  <path d="M4 20l6-6" />
+                </svg>
+                <svg class="icon-collapse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 15H4v5" />
+                  <path d="M4 20l7-7" />
+                  <path d="M15 9h5V4" />
+                  <path d="M20 4l-7 7" />
+                  <path d="M15 15h5v5" />
+                  <path d="M20 20l-7-7" />
+                  <path d="M9 9H4V4" />
+                  <path d="M4 4l7 7" />
+                </svg>
+              </button>
+              <iframe src="./3D.html?embed=1&variant=shed" title="Prévisualisation Déco 3D maison 3"></iframe>
+            </div>
+          </article>
+
+          <article class="viewer-card">
+            <p class="viewer-label">Maison 4</p>
+            <div class="viewer" data-viewer>
+              <button class="frame-toggle" type="button" aria-label="Agrandir la vignette Maison 4" aria-expanded="false">
+                <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M8 4H4v4" />
+                  <path d="M4 4l6 6" />
+                  <path d="M16 20h4v-4" />
+                  <path d="M20 20l-6-6" />
+                  <path d="M20 8V4h-4" />
+                  <path d="M20 4l-6 6" />
+                  <path d="M4 16v4h4" />
+                  <path d="M4 20l6-6" />
+                </svg>
+                <svg class="icon-collapse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 15H4v5" />
+                  <path d="M4 20l7-7" />
+                  <path d="M15 9h5V4" />
+                  <path d="M20 4l-7 7" />
+                  <path d="M15 15h5v5" />
+                  <path d="M20 20l-7-7" />
+                  <path d="M9 9H4V4" />
+                  <path d="M4 4l7 7" />
+                </svg>
+              </button>
+              <iframe src="./3D.html?embed=1&variant=lshape" title="Prévisualisation Déco 3D maison 4"></iframe>
+            </div>
+          </article>
+
+          <article class="viewer-card">
+            <p class="viewer-label">Maison 5</p>
+            <div class="viewer" data-viewer>
+              <button class="frame-toggle" type="button" aria-label="Agrandir la vignette Maison 5" aria-expanded="false">
+                <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M8 4H4v4" />
+                  <path d="M4 4l6 6" />
+                  <path d="M16 20h4v-4" />
+                  <path d="M20 20l-6-6" />
+                  <path d="M20 8V4h-4" />
+                  <path d="M20 4l-6 6" />
+                  <path d="M4 16v4h4" />
+                  <path d="M4 20l6-6" />
+                </svg>
+                <svg class="icon-collapse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 15H4v5" />
+                  <path d="M4 20l7-7" />
+                  <path d="M15 9h5V4" />
+                  <path d="M20 4l-7 7" />
+                  <path d="M15 15h5v5" />
+                  <path d="M20 20l-7-7" />
+                  <path d="M9 9H4V4" />
+                  <path d="M4 4l7 7" />
+                </svg>
+              </button>
+              <iframe src="./3D.html?embed=1&variant=courtyard" title="Prévisualisation Déco 3D maison 5"></iframe>
+            </div>
+          </article>
+        </div>
+
+      </section>
+    </main>
+
+    <div class="page-credit">
+      Dev par <strong>Gregory HARGOUS</strong> une idée (barrée) de <strong>Manue</strong>
+    </div>
+
+    <script type="module">
+      const viewers = Array.from(document.querySelectorAll("[data-viewer]"));
+
+      function syncEmbeddedUi(viewer, expanded) {
+        const framePreview = viewer.querySelector("iframe");
+        framePreview.contentWindow?.postMessage(
+          {
+            type: "deco-3d:set-embed-ui-hidden",
+            hidden: !expanded,
+          },
+          window.location.origin,
+        );
+      }
+
+      function setExpanded(viewer, expanded) {
+        viewers.forEach((otherViewer) => {
+          if (otherViewer !== viewer) {
+            const otherButton = otherViewer.querySelector(".frame-toggle");
+            otherViewer.classList.remove("is-expanded");
+            otherButton.setAttribute("aria-expanded", "false");
+            otherButton.setAttribute("aria-label", otherButton.dataset.expandLabel);
+            syncEmbeddedUi(otherViewer, false);
+          }
+        });
+
+        viewer.classList.toggle("is-expanded", expanded);
+        document.body.classList.toggle("has-overlay", expanded);
+
+        const frameToggle = viewer.querySelector(".frame-toggle");
+        frameToggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+        frameToggle.setAttribute("aria-label", expanded ? frameToggle.dataset.collapseLabel : frameToggle.dataset.expandLabel);
+        syncEmbeddedUi(viewer, expanded);
+      }
+
+      viewers.forEach((viewer) => {
+        const frameToggle = viewer.querySelector(".frame-toggle");
+        const framePreview = viewer.querySelector("iframe");
+
+        frameToggle.dataset.expandLabel = frameToggle.getAttribute("aria-label") || "Agrandir la vignette";
+        frameToggle.dataset.collapseLabel = frameToggle.dataset.expandLabel.replace("Agrandir", "Réduire");
+
+        frameToggle.addEventListener("click", () => {
+          setExpanded(viewer, !viewer.classList.contains("is-expanded"));
+        });
+
+        framePreview.addEventListener("load", () => {
+          syncEmbeddedUi(viewer, false);
+        });
+      });
+
+      window.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") {
+          return;
+        }
+
+        const expandedViewer = viewers.find((viewer) => viewer.classList.contains("is-expanded"));
+        if (!expandedViewer) {
+          return;
+        }
+
+        setExpanded(expandedViewer, false);
+        expandedViewer.querySelector(".frame-toggle").focus();
+      });
+    </script>
+  </body>
+</html>
