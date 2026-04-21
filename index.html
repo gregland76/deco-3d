@@ -127,12 +127,33 @@
       }
 
       .viewer iframe {
-        display: block;
+        display: none;
         width: 100%;
         height: 100%;
         border: 0;
         background: #111;
         pointer-events: none;
+      }
+
+      .viewer-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        width: 100%;
+        height: 100%;
+        color: var(--text-muted);
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .viewer-placeholder svg {
+        width: 56px;
+        height: 56px;
+        opacity: 0.38;
       }
 
       .viewer.is-expanded {
@@ -147,7 +168,12 @@
       }
 
       .viewer.is-expanded iframe {
+        display: block;
         pointer-events: auto;
+      }
+
+      .viewer.is-expanded .viewer-placeholder {
+        display: none;
       }
 
       .frame-toggle {
@@ -272,7 +298,7 @@
         <div class="viewer-grid">
           <article class="viewer-card">
             <p class="viewer-label">Maison 1</p>
-            <div class="viewer" data-viewer>
+            <div class="viewer" data-viewer data-src="./3D.html?embed=1&variant=classic" data-iframe-title="Prévisualisation Déco 3D maison 1">
               <button class="frame-toggle" type="button" aria-label="Agrandir la vignette Maison 1" aria-expanded="false">
                 <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M8 4H4v4" />
@@ -295,13 +321,16 @@
                   <path d="M4 4l7 7" />
                 </svg>
               </button>
-              <iframe src="./3D.html?embed=1&variant=classic" title="Prévisualisation Déco 3D maison 1"></iframe>
+              <div class="viewer-placeholder">
+                <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 24L24 6l20 18"/><path d="M8 21v21h32V21"/><rect x="18" y="28" width="12" height="14"/></svg>
+                <span>Voir en 3D</span>
+              </div>
             </div>
           </article>
 
           <article class="viewer-card">
             <p class="viewer-label">Maison 2</p>
-            <div class="viewer" data-viewer>
+            <div class="viewer" data-viewer data-src="./3D.html?embed=1&variant=atrium" data-iframe-title="Prévisualisation Déco 3D maison 2">
               <button class="frame-toggle" type="button" aria-label="Agrandir la vignette Maison 2" aria-expanded="false">
                 <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M8 4H4v4" />
@@ -324,13 +353,16 @@
                   <path d="M4 4l7 7" />
                 </svg>
               </button>
-              <iframe src="./3D.html?embed=1&variant=atrium" title="Prévisualisation Déco 3D maison 2"></iframe>
+              <div class="viewer-placeholder">
+                <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 24L24 6l20 18"/><path d="M8 21v21h32V21"/><rect x="18" y="28" width="12" height="14"/></svg>
+                <span>Voir en 3D</span>
+              </div>
             </div>
           </article>
 
           <article class="viewer-card">
             <p class="viewer-label">Maison 3</p>
-            <div class="viewer" data-viewer>
+            <div class="viewer" data-viewer data-src="./3D.html?embed=1&variant=shed" data-iframe-title="Prévisualisation Déco 3D maison 3">
               <button class="frame-toggle" type="button" aria-label="Agrandir la vignette Maison 3" aria-expanded="false">
                 <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M8 4H4v4" />
@@ -353,13 +385,16 @@
                   <path d="M4 4l7 7" />
                 </svg>
               </button>
-              <iframe src="./3D.html?embed=1&variant=shed" title="Prévisualisation Déco 3D maison 3"></iframe>
+              <div class="viewer-placeholder">
+                <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 24L24 6l20 18"/><path d="M8 21v21h32V21"/><rect x="18" y="28" width="12" height="14"/></svg>
+                <span>Voir en 3D</span>
+              </div>
             </div>
           </article>
 
           <article class="viewer-card">
             <p class="viewer-label">Maison 4</p>
-            <div class="viewer" data-viewer>
+            <div class="viewer" data-viewer data-src="./3D.html?embed=1&variant=lshape" data-iframe-title="Prévisualisation Déco 3D maison 4">
               <button class="frame-toggle" type="button" aria-label="Agrandir la vignette Maison 4" aria-expanded="false">
                 <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M8 4H4v4" />
@@ -382,13 +417,16 @@
                   <path d="M4 4l7 7" />
                 </svg>
               </button>
-              <iframe src="./3D.html?embed=1&variant=lshape" title="Prévisualisation Déco 3D maison 4"></iframe>
+              <div class="viewer-placeholder">
+                <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 24L24 6l20 18"/><path d="M8 21v21h32V21"/><rect x="18" y="28" width="12" height="14"/></svg>
+                <span>Voir en 3D</span>
+              </div>
             </div>
           </article>
 
           <article class="viewer-card">
             <p class="viewer-label">Maison 5</p>
-            <div class="viewer" data-viewer>
+            <div class="viewer" data-viewer data-src="./3D.html?embed=1&variant=courtyard" data-iframe-title="Prévisualisation Déco 3D maison 5">
               <button class="frame-toggle" type="button" aria-label="Agrandir la vignette Maison 5" aria-expanded="false">
                 <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M8 4H4v4" />
@@ -411,7 +449,10 @@
                   <path d="M4 4l7 7" />
                 </svg>
               </button>
-              <iframe src="./3D.html?embed=1&variant=courtyard" title="Prévisualisation Déco 3D maison 5"></iframe>
+              <div class="viewer-placeholder">
+                <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 24L24 6l20 18"/><path d="M8 21v21h32V21"/><rect x="18" y="28" width="12" height="14"/></svg>
+                <span>Voir en 3D</span>
+              </div>
             </div>
           </article>
         </div>
@@ -428,6 +469,7 @@
 
       function syncEmbeddedUi(viewer, expanded) {
         const framePreview = viewer.querySelector("iframe");
+        if (!framePreview) return;
         framePreview.contentWindow?.postMessage(
           {
             type: "deco-3d:set-embed-ui-hidden",
@@ -454,22 +496,35 @@
         const frameToggle = viewer.querySelector(".frame-toggle");
         frameToggle.setAttribute("aria-expanded", expanded ? "true" : "false");
         frameToggle.setAttribute("aria-label", expanded ? frameToggle.dataset.collapseLabel : frameToggle.dataset.expandLabel);
-        syncEmbeddedUi(viewer, expanded);
+
+        if (expanded) {
+          let iframe = viewer.querySelector("iframe");
+          if (!iframe) {
+            iframe = document.createElement("iframe");
+            iframe.title = viewer.dataset.iframeTitle || "Prévisualisation 3D";
+            iframe.src = viewer.dataset.src;
+            iframe.addEventListener("load", () => syncEmbeddedUi(viewer, true));
+            viewer.appendChild(iframe);
+          } else {
+            syncEmbeddedUi(viewer, true);
+          }
+        } else {
+          syncEmbeddedUi(viewer, false);
+        }
       }
 
       viewers.forEach((viewer) => {
         const frameToggle = viewer.querySelector(".frame-toggle");
-        const framePreview = viewer.querySelector("iframe");
 
         frameToggle.dataset.expandLabel = frameToggle.getAttribute("aria-label") || "Agrandir la vignette";
         frameToggle.dataset.collapseLabel = frameToggle.dataset.expandLabel.replace("Agrandir", "Réduire");
 
-        frameToggle.addEventListener("click", () => {
-          setExpanded(viewer, !viewer.classList.contains("is-expanded"));
+        viewer.querySelector(".viewer-placeholder").addEventListener("click", () => {
+          setExpanded(viewer, true);
         });
 
-        framePreview.addEventListener("load", () => {
-          syncEmbeddedUi(viewer, false);
+        frameToggle.addEventListener("click", () => {
+          setExpanded(viewer, !viewer.classList.contains("is-expanded"));
         });
       });
 
