@@ -1,6 +1,7 @@
 # Historique des modifications
 
 ## 2026-04-21
+- Mise en ligne du dépôt deco-3d sur GitHub (gregland76/deco-3d).
 - Ajustement UI de 3D.html: panneau de contrôle réduit en largeur sur desktop et mobile.
 - Ajustement UI de 3D.html: largeur des lignes de sliders remise à 100% du panneau pour améliorer la lisibilité.
 
