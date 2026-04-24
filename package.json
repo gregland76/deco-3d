@@ -1,6 +1,7 @@
 {
   "name": "deco-3d",
   "version": "0.0.0",
+  "description": "Un projet en cours de dev pour Manue",
   "private": true,
   "type": "module",
   "scripts": {
