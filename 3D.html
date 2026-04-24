@@ -179,6 +179,13 @@ body.embed-ui-hidden #panel {
           }
         });
       });
+
+      // Clic en dehors du panneau → fermer tous les details
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#panel')) {
+          allDetails.forEach(d => d.removeAttribute('open'));
+        }
+      });
     </script>
     <script type="module" src="/src/main.js"></script>
     
