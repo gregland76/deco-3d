@@ -15,26 +15,85 @@ export function createAtriumHouse(matsByType) {
   roof.position.set(0, height + 0.55, 0);
   root.add(roof);
 
+
+  // --- Mur Nord (2 sections, chacune avec une fenêtre)
+  const winW = 0.9, winH = 1.1, winY = 1.3;
   const northSectionWidth = (width - 2.2) / 2;
-  const northLeft = new THREE.Mesh(new THREE.BoxGeometry(northSectionWidth, height, thickness), matsByType.walls);
-  northLeft.position.set(-(width / 4 + 0.55), height / 2, -depth / 2);
-  root.add(northLeft);
-
-  const northRight = new THREE.Mesh(new THREE.BoxGeometry(northSectionWidth, height, thickness), matsByType.walls);
-  northRight.position.set(width / 4 + 0.55, height / 2, -depth / 2);
-  root.add(northRight);
-
+  [-1, 1].forEach((side) => {
+    const shape = new THREE.Shape();
+    shape.moveTo(-northSectionWidth/2, 0);
+    shape.lineTo(northSectionWidth/2, 0);
+    shape.lineTo(northSectionWidth/2, height);
+    shape.lineTo(-northSectionWidth/2, height);
+    shape.closePath();
+    // Trou fenêtre
+    const hole = new THREE.Path();
+    hole.moveTo(-winW/2, winY - winH/2);
+    hole.lineTo(winW/2, winY - winH/2);
+    hole.lineTo(winW/2, winY + winH/2);
+    hole.lineTo(-winW/2, winY + winH/2);
+    hole.closePath();
+    shape.holes.push(hole);
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: thickness, bevelEnabled: false });
+    const mesh = new THREE.Mesh(geo, matsByType.walls);
+    mesh.position.set(side * (width / 4 + 0.55), 0, -depth / 2 - thickness/2);
+    root.add(mesh);
+    // Pas de vitrage : la fenêtre est un vrai trou
+  });
+  // Lintel (au-dessus des fenêtres)
   const northLintel = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.75, thickness), matsByType.walls);
   northLintel.position.set(0, height - 0.375, -depth / 2);
   root.add(northLintel);
 
-  const eastWall = new THREE.Mesh(new THREE.BoxGeometry(thickness, height, depth), matsByType.walls);
-  eastWall.position.set(width / 2, height / 2, 0);
-  root.add(eastWall);
 
-  const westWall = new THREE.Mesh(new THREE.BoxGeometry(thickness, height, depth), matsByType.walls);
-  westWall.position.set(-width / 2, height / 2, 0);
-  root.add(westWall);
+  // --- Mur Est (1 fenêtre)
+  {
+    const shape = new THREE.Shape();
+    shape.moveTo(-depth/2, 0);
+    shape.lineTo(depth/2, 0);
+    shape.lineTo(depth/2, height);
+    shape.lineTo(-depth/2, height);
+    shape.closePath();
+    // Trou fenêtre
+    const hole = new THREE.Path();
+    hole.moveTo(depth/4 - 0.55, winY - winH/2);
+    hole.lineTo(depth/4 + 0.55, winY - winH/2);
+    hole.lineTo(depth/4 + 0.55, winY + winH/2);
+    hole.lineTo(depth/4 - 0.55, winY + winH/2);
+    hole.closePath();
+    shape.holes.push(hole);
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: thickness, bevelEnabled: false });
+    const mesh = new THREE.Mesh(geo, matsByType.walls);
+    mesh.rotation.y = Math.PI/2;
+    mesh.position.set(width/2 + thickness/2, 0, 0);
+    root.add(mesh);
+    // Pas de vitrage : la fenêtre est un vrai trou
+  }
+
+
+  // --- Mur Ouest (1 fenêtre)
+  {
+    const shape = new THREE.Shape();
+    shape.moveTo(-depth/2, 0);
+    shape.lineTo(depth/2, 0);
+    shape.lineTo(depth/2, height);
+    shape.lineTo(-depth/2, height);
+    shape.closePath();
+    // Trou fenêtre
+    const hole = new THREE.Path();
+    hole.moveTo(-depth/4 - 0.55, winY - winH/2);
+    hole.lineTo(-depth/4 + 0.55, winY - winH/2);
+    hole.lineTo(-depth/4 + 0.55, winY + winH/2);
+    hole.lineTo(-depth/4 - 0.55, winY + winH/2);
+    hole.closePath();
+    shape.holes.push(hole);
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: thickness, bevelEnabled: false });
+    const mesh = new THREE.Mesh(geo, matsByType.walls);
+    mesh.rotation.y = Math.PI/2;
+    mesh.position.set(-width/2 - thickness/2, 0, 0);
+    root.add(mesh);
+    // Pas de vitrage : la fenêtre est un vrai trou
+  }
 
   const southBand = new THREE.Mesh(new THREE.BoxGeometry(width, 1.25, thickness), matsByType.walls);
   southBand.position.set(0, height - 0.625, depth / 2);

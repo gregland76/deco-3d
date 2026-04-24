@@ -20,29 +20,82 @@ export function createShedHouse(matsByType) {
   floor.position.set(0, 0.06, 0);
   root.add(floor);
 
-  // ── Mur Nord (arrière — pleine hauteur H_BACK) ──────────────────────
-  const wallN = new THREE.Mesh(new THREE.BoxGeometry(W, H_BACK, T), matsByType.walls);
-  wallN.position.set(0, H_BACK / 2, -D / 2);
-  root.add(wallN);
 
-  // ── Pignons trapézoïdaux Est et Ouest ──────────────────────────────────
-  // rotation.y = -π/2 → shape.x mappe sur world.z, shape.y sur world.y
-  const buildGable = (directionX) => {
+  // --- Mur Nord (2 fenêtres)
+  const winW = 1.1, winH = 1.2, winY = 1.5;
+  {
     const shape = new THREE.Shape();
-    // sens anti-horaire vu de l'extérieur
-    shape.moveTo(-D / 2, 0);       // nord bas
-    shape.lineTo(D / 2, 0);        // sud bas
-    shape.lineTo(D / 2, H_FRONT);  // sud haut
-    shape.lineTo(-D / 2, H_BACK);  // nord haut
+    shape.moveTo(-W/2, 0);
+    shape.lineTo(W/2, 0);
+    shape.lineTo(W/2, H_BACK);
+    shape.lineTo(-W/2, H_BACK);
     shape.closePath();
-
-    const geo = new THREE.ShapeGeometry(shape);
+    // Trous fenêtres
+    [-1, 1].forEach((side) => {
+      const hole = new THREE.Path();
+      hole.moveTo(side * (W/4) - winW/2, winY - winH/2);
+      hole.lineTo(side * (W/4) + winW/2, winY - winH/2);
+      hole.lineTo(side * (W/4) + winW/2, winY + winH/2);
+      hole.lineTo(side * (W/4) - winW/2, winY + winH/2);
+      hole.closePath();
+      shape.holes.push(hole);
+    });
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: T, bevelEnabled: false });
     const mesh = new THREE.Mesh(geo, matsByType.walls);
-    mesh.rotation.y = directionX > 0 ? -Math.PI / 2 : Math.PI / 2;
-    mesh.position.set(directionX * W / 2, 0, 0);
+    mesh.position.set(0, 0, -D/2 - T/2);
     root.add(mesh);
-  };
+    // Vitres
+    [-1, 1].forEach((side) => {
+      const glass = new THREE.Mesh(
+        new THREE.BoxGeometry(winW, winH, T * 0.5),
+        matsByType.glass && matsByType.glass.baseColor ? new THREE.MeshStandardMaterial({
+          map: matsByType.glass.baseColor,
+          normalMap: matsByType.glass.normal,
+          roughnessMap: matsByType.glass.roughness,
+          transparent: true,
+          opacity: 0.5,
+          color: 0x99bbff,
+          metalness: 0.1,
+          roughness: 0.05,
+          envMapIntensity: 1.2,
+        }) : new THREE.MeshPhysicalMaterial({
+          color: 0x99bbff,
+          metalness: 0.1,
+          roughness: 0.05,
+          transmission: 0.92,
+          thickness: 0.04,
+          ior: 1.5,
+          transparent: true,
+          opacity: 0.5,
+          reflectivity: 0.4,
+          clearcoat: 0.5,
+          clearcoatRoughness: 0.1,
+        })
+      );
+      glass.position.set(side * (W/4), winY, -D/2 - T/4);
+      // Par défaut, la face du cube est perpendiculaire à Z, donc rien à changer
+      root.add(glass);
+    });
+  }
 
+  // --- Pignons Est et Ouest (sans fenêtre)
+  const buildGable = (directionX) => {
+    const group = new THREE.Group();
+    const shape = new THREE.Shape();
+    shape.moveTo(-D / 2, 0);
+    shape.lineTo(D / 2, 0);
+    shape.lineTo(D / 2, H_FRONT);
+    shape.lineTo(-D / 2, H_BACK);
+    shape.closePath();
+    // Pas de trou fenêtre
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: T, bevelEnabled: false });
+    const mesh = new THREE.Mesh(geo, matsByType.walls);
+    mesh.position.set(0, 0, 0);
+    group.add(mesh);
+    group.rotation.y = directionX > 0 ? -Math.PI / 2 : Math.PI / 2;
+    group.position.set(directionX * W / 2, 0, 0);
+    root.add(group);
+  };
   buildGable(+1); // Est
   buildGable(-1); // Ouest
 
