@@ -16,6 +16,7 @@ const searchParams = new URLSearchParams(window.location.search);
 const forceShowUi = searchParams.get("showUi") === "1";
 const embedMode = searchParams.get("embed") === "1";
 const houseVariant = searchParams.get("variant") ?? "classic";
+const captureMode = searchParams.get("capture") === "1";
 
 function applyWeightsToMat(mat, w) {
   Object.entries(w).forEach(([key, value]) => {
@@ -28,12 +29,27 @@ function applyWeightsToMat(mat, w) {
 const app = document.getElementById("app");
 app.innerHTML = "";
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: captureMode });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.1;
+
+if (captureMode) {
+  THREE.DefaultLoadingManager.onLoad = () => {
+    requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => {
+      try {
+        const dataUrl = renderer.domElement.toDataURL("image/jpeg", 0.8);
+        window.parent.postMessage(
+          { type: "deco-3d:screenshot", variant: houseVariant, dataUrl },
+          window.location.origin
+        );
+      } catch (_) {}
+    })));
+  };
+}
+
 // HDRI environment + background
 const pmrem = new THREE.PMREMGenerator(renderer);
 pmrem.compileEquirectangularShader();

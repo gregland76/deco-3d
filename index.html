@@ -147,6 +147,7 @@
         font-size: 13px;
         letter-spacing: 0.06em;
         cursor: pointer;
+        -webkit-user-select: none;
         user-select: none;
       }
 
@@ -239,11 +240,10 @@
 
       .page-credit {
         position: fixed;
-        left: 50%;
+        right: 14px;
         bottom: 14px;
         z-index: 1100;
-        transform: translateX(-50%);
-        text-align: center;
+        text-align: right;
         font: 13px/1.3 "Avenir Next", "Segoe UI", sans-serif;
         color: rgba(243, 245, 247, 0.9);
         background: rgba(0, 0, 0, 0.4);
@@ -257,6 +257,26 @@
 
       .page-credit strong {
         font-weight: 650;
+      }
+
+      .viewer-placeholder.has-thumb svg {
+        display: none;
+      }
+
+      .viewer-placeholder.has-thumb {
+        justify-content: flex-end;
+        padding-bottom: 16px;
+        background-size: cover;
+        background-position: center;
+      }
+
+      .viewer-placeholder.has-thumb span {
+        padding: 5px 14px;
+        border-radius: 20px;
+        background: rgba(0, 0, 0, 0.5);
+        -webkit-backdrop-filter: blur(6px);
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
       }
 
       @media (max-width: 640px) {
@@ -274,8 +294,8 @@
         }
 
         .page-credit {
-          width: calc(100vw - 28px);
-          max-width: 460px;
+          right: 10px;
+          max-width: calc(100vw - 20px);
           font-size: 12px;
         }
       }
@@ -541,6 +561,71 @@
         setExpanded(expandedViewer, false);
         expandedViewer.querySelector(".frame-toggle").focus();
       });
+
+      // --- Génération automatique des vignettes ---
+      const THUMB_KEY = "deco3d-thumb-v1:";
+
+      function getStoredThumb(variant) {
+        try { return localStorage.getItem(THUMB_KEY + variant); } catch { return null; }
+      }
+      function saveThumb(variant, dataUrl) {
+        try { localStorage.setItem(THUMB_KEY + variant, dataUrl); } catch {}
+      }
+      function applyThumb(viewer, dataUrl) {
+        const ph = viewer.querySelector(".viewer-placeholder");
+        ph.style.backgroundImage = `url(${JSON.stringify(dataUrl)})`;
+        ph.classList.add("has-thumb");
+      }
+      function extractVariant(src) {
+        try { return new URL(src, location.href).searchParams.get("variant") || ""; } catch { return ""; }
+      }
+
+      const captureWrap = document.createElement("div");
+      captureWrap.style.cssText = "position:fixed;width:300px;height:300px;overflow:hidden;opacity:0;pointer-events:none;top:-9999px;left:-9999px;";
+      document.body.appendChild(captureWrap);
+
+      const thumbQueue = [];
+      let thumbBusy = false;
+      let thumbTimer;
+
+      function nextThumb() {
+        thumbBusy = false;
+        clearTimeout(thumbTimer);
+        if (!thumbQueue.length) return;
+        thumbBusy = true;
+        const { variant, src } = thumbQueue.shift();
+        const frame = document.createElement("iframe");
+        frame.dataset.captureVariant = variant;
+        frame.style.cssText = "width:100%;height:100%;border:none;";
+        frame.src = src + "&capture=1";
+        captureWrap.appendChild(frame);
+        thumbTimer = setTimeout(() => { frame.remove(); nextThumb(); }, 12000);
+      }
+
+      window.addEventListener("message", (event) => {
+        if (event.origin !== location.origin) return;
+        if (event.data?.type !== "deco-3d:screenshot") return;
+        const { variant, dataUrl } = event.data;
+        saveThumb(variant, dataUrl);
+        const frame = captureWrap.querySelector(`[data-capture-variant="${variant}"]`);
+        if (frame) frame.remove();
+        const target = viewers.find((v) => extractVariant(v.dataset.src) === variant);
+        if (target) applyThumb(target, dataUrl);
+        nextThumb();
+      });
+
+      viewers.forEach((viewer) => {
+        const variant = extractVariant(viewer.dataset.src);
+        if (!variant) return;
+        const stored = getStoredThumb(variant);
+        if (stored) {
+          applyThumb(viewer, stored);
+        } else {
+          thumbQueue.push({ variant, src: viewer.dataset.src });
+        }
+      });
+
+      if (!thumbBusy && thumbQueue.length) nextThumb();
     </script>
   </body>
 </html>

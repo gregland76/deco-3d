@@ -1,5 +1,8 @@
 # Historique des modifications
 
+## 2026-04-24
+- Ajout de captures d'écran automatiques des maisons dans les vignettes : chaque vignette charge une iframe cachée (300×300) en mode `capture=1`, Three.js prend un screenshot via `toDataURL` après chargement complet et l'envoie au parent via `postMessage`. Les captures sont persistées dans `localStorage` pour éviter de recharger les scènes à chaque visite.
+
 ## 2026-04-21
 - Mise en ligne du dépôt deco-3d sur GitHub (gregland76/deco-3d).
 - Ajustement UI de 3D.html: panneau de contrôle réduit en largeur sur desktop et mobile.
