@@ -73,9 +73,13 @@ scene.background = new THREE.Color(0x20242a);
 const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 200);
 camera.position.set(6, 3.2, 6);
 
+
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.target.set(0, 1.2, 0);
+// Limiter la rotation verticale pour ne pas passer sous la terre
+controls.minPolarAngle = Math.PI / 6; // 30° (optionnel, ajustable)
+controls.maxPolarAngle = Math.PI / 2; // 90° (empêche d'aller sous la maison)
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x1a1f2a, 0.9));
 const sun = new THREE.DirectionalLight(0xffffff, 1.2);
