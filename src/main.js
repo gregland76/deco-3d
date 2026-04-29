@@ -50,7 +50,7 @@ pmrem.compileEquirectangularShader();
 
 new HDRLoader()
   .setPath("./hdr/OLD/")
-  .load("outdoor.hdr", (hdrTex) => {
+  .load("sky.hdr", (hdrTex) => {
     const envMap = pmrem.fromEquirectangular(hdrTex).texture;
 
     scene.environment = envMap; // lighting/reflections
