@@ -1,5 +1,18 @@
 # Historique des modifications
 
+## 2026-04-29
+- Installation de `vite` en dépendance de développement pour pouvoir lancer le serveur local.
+- Correction de plusieurs erreurs de parsing dans `src/ui.js` et `src/materialLibrary.js`.
+- Correction des chemins d'assets en utilisant `import.meta.env.BASE_URL` pour garantir le bon chargement des textures avec Vite.
+- Remplacement de `RGBELoader` par `HDRLoader` et gestion améliorée du chargement HDR.
+- Génération des coordonnées UV pour les géométries extrudées (murs) afin que les textures s'affichent correctement.
+- Mise à jour de l'application des poids de textures : `applyWeightsToMat` protège les accès aux uniforms et propose un fallback vers `MeshStandardMaterial` si nécessaire.
+- Ajout d'un champ numérique synchronisé avec chaque curseur (slider) pour une précision d'entrée améliorée.
+- Alignement des maisons sur le sol (correction du flottement) en recentrant la position selon la bbox.
+- Divers correctifs et nettoyages de logs pour stabiliser l'affichage et faciliter le débogage en navigateur.
+
+Remarques: restaure la pipeline shader (désactiver le mode debug temporaire) et vérifier le chargement asynchrone des textures pour finaliser l'intégration complète des shaders personnalisés.
+
 ## 2026-04-24
 - Ajout de captures d'écran automatiques des maisons dans les vignettes : chaque vignette charge une iframe cachée (300×300) en mode `capture=1`, Three.js prend un screenshot via `toDataURL` après chargement complet et l'envoie au parent via `postMessage`. Les captures sont persistées dans `localStorage` pour éviter de recharger les scènes à chaque visite.
 
