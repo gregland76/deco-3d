@@ -1,7 +1,7 @@
 # Historique des modifications
 
 ## 2026-04-29
-- Installation de `vite` en dépendance de développement pour pouvoir lancer le serveur local.
+- Installation de `vite` en  dépendance de développement pour pouvoir lancer le serveur local.
 - Correction de plusieurs erreurs de parsing dans `src/ui.js` et `src/materialLibrary.js`.
 - Correction des chemins d'assets en utilisant `import.meta.env.BASE_URL` pour garantir le bon chargement des textures avec Vite.
 - Remplacement de `RGBELoader` par `HDRLoader` et gestion améliorée du chargement HDR.
