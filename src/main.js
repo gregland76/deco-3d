@@ -163,6 +163,19 @@ if (true) {
 
 try {
   const house = createProceduralHouse({ matsByType, variant: houseVariant });
+  // Aligner la maison sur le sol : déplacer pour que la Y minimale soit à 0
+  try {
+    const box = new THREE.Box3().setFromObject(house);
+    console.log('house bbox before adjust', box.min, box.max);
+    if (box && Number.isFinite(box.min.y)) {
+      house.position.y = -box.min.y;
+      console.log('house positioned to', house.position.y);
+    } else {
+      console.warn('Could not compute house bbox min.y', box);
+    }
+  } catch (e) {
+    console.error('Error computing house bbox', e);
+  }
   scene.add(house);
   console.log('Procedural house added to scene', house);
 } catch (err) {
