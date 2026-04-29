@@ -57,6 +57,7 @@ function makeRow({ label, key, value, checked, onCheck, onInput, showSlider }) {
   return { row, slider, pct, checkbox };
 }
 
+export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeightsChange = () => {} }) {
   const container = document.getElementById(containerId);
   if (!container) throw new Error(`Missing container ${containerId}`);
 

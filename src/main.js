@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
+import { HDRLoader } from "three/examples/jsm/loaders/HDRLoader.js";
 import { mountTypeGroup } from "./ui.js";
 import { createProceduralHouse } from "./houseProcedural.js";
 import { loadPBRMaterial, buildLayeredSet } from "./materialLibrary.js";
@@ -18,13 +18,7 @@ const embedMode = searchParams.get("embed") === "1";
 const houseVariant = searchParams.get("variant") ?? "classic";
 const captureMode = searchParams.get("capture") === "1";
 
-function applyWeightsToMat(mat, w) {
-  Object.entries(w).forEach(([key, value]) => {
-    if (mat.userData.uniforms[key]) {
-      mat.userData.uniforms[key].value = value / 100;
-    }
-  });
-}
+// applyWeightsToMat will be defined later (after layeredSet is built)
 
 const app = document.getElementById("app");
 app.innerHTML = "";
@@ -54,8 +48,8 @@ if (captureMode) {
 const pmrem = new THREE.PMREMGenerator(renderer);
 pmrem.compileEquirectangularShader();
 
-new RGBELoader()
-  .setPath("./hdr/")
+new HDRLoader()
+  .setPath("./hdr/OLD/")
   .load("outdoor.hdr", (hdrTex) => {
     const envMap = pmrem.fromEquirectangular(hdrTex).texture;
 
@@ -66,6 +60,7 @@ new RGBELoader()
     pmrem.dispose();
   });
 app.appendChild(renderer.domElement);
+console.log('Renderer DOM element appended', renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x20242a);
@@ -97,6 +92,12 @@ const slate = loadPBRMaterial(tl, "ardoise");
 // UI order: paint/brick/stone/wood/slate
 const layeredSet = buildLayeredSet([paint, brick, stone, wood, slate]);
 
+// Debug: inspect textures
+console.log('layeredSet.baseColorMaps', layeredSet.baseColorMaps);
+layeredSet.baseColorMaps.forEach((t, i) => {
+  console.log(`tex[${i}]`, { width: t?.image?.width, height: t?.image?.height, colorSpace: t?.colorSpace, encoding: t?.encoding });
+});
+
 // Stable materials (MeshStandardMaterial + basecolor mix only)
 const wallsMat = makeLayeredBaseColorStandardMaterial({
   baseColorMaps: layeredSet.baseColorMaps,
@@ -117,9 +118,56 @@ const roofsMat = makeLayeredBaseColorStandardMaterial({
 const matsByType = { walls: wallsMat, floors: floorsMat, roofs: roofsMat };
 
 // Appliquer les textures de base dès le chargement
+// La fonction applyWeightsToMat est définie ici pour avoir accès à `layeredSet`
+function applyWeightsToMat(mat, w) {
+  if (!mat) return;
+
+  // Si le matériau expose des uniforms (shader custom), on les met à jour
+  if (mat.userData && mat.userData.uniforms) {
+    Object.entries(w).forEach(([key, value]) => {
+      if (mat.userData.uniforms[key]) {
+        mat.userData.uniforms[key].value = value / 100;
+      }
+    });
+    return;
+  }
+
+  // Fallback pour MeshStandardMaterial de debug : choisir la map ayant le plus haut poids
+  const entries = Object.entries(w || {});
+  if (entries.length === 0) return;
+  let maxKey = entries[0][0];
+  let maxVal = entries[0][1];
+  for (const [k, v] of entries) {
+    if (v > maxVal) { maxVal = v; maxKey = k; }
+  }
+  const idx = Number(maxKey.replace(/\D/g, ""));
+  const maps = layeredSet.baseColorMaps;
+  if (Number.isFinite(idx) && maps && maps[idx]) {
+    mat.map = maps[idx];
+    mat.needsUpdate = true;
+  }
+}
+
+// Appliquer les textures de base dès le chargement
 Object.entries(matsByType).forEach(([type, mat]) => applyWeightsToMat(mat, DEFAULT_WEIGHTS[type]));
 
-scene.add(createProceduralHouse({ matsByType, variant: houseVariant }));
+// DEBUG: temporaire — utiliser des MeshStandardMaterial simples pour vérifier les textures
+// Désactive ceci quand le debug est terminé
+if (true) {
+  const tl = layeredSet.baseColorMaps;
+  const { MeshStandardMaterial } = THREE;
+  matsByType.walls = new MeshStandardMaterial({ map: tl[1] });
+  matsByType.floors = new MeshStandardMaterial({ map: tl[3] });
+  matsByType.roofs = new MeshStandardMaterial({ map: tl[4] });
+}
+
+try {
+  const house = createProceduralHouse({ matsByType, variant: houseVariant });
+  scene.add(house);
+  console.log('Procedural house added to scene', house);
+} catch (err) {
+  console.error('Error creating or adding procedural house', err);
+}
 
 // UI
 const groups = [];

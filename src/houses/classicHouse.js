@@ -10,6 +10,24 @@ export function createClassicHouse(matsByType) {
   const T = 0.15;
   const ROOF_H = 1.8;
 
+  function generateUVs(geometry) {
+    geometry.computeBoundingBox();
+    const bbox = geometry.boundingBox;
+    const size = new THREE.Vector3();
+    bbox.getSize(size);
+    const pos = geometry.attributes.position;
+    const uv = new Float32Array(pos.count * 2);
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      const u = size.x > 0 ? (x - bbox.min.x) / size.x : 0;
+      const v = size.y > 0 ? (y - bbox.min.y) / size.y : 0;
+      uv[i * 2] = u;
+      uv[i * 2 + 1] = v;
+    }
+    geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  }
+
   // Toit plat
   const roof = new THREE.Mesh(
     new THREE.BoxGeometry(W + 0.3, 0.18, D + 0.15),
@@ -47,6 +65,7 @@ export function createClassicHouse(matsByType) {
       shape.holes.push(hole);
     });
     const geo = new THREE.ExtrudeGeometry(shape, { depth: T, bevelEnabled: false });
+    generateUVs(geo);
     const mesh = new THREE.Mesh(geo, matsByType.walls);
     mesh.position.set(0, 0, -D/2 - T/2);
     root.add(mesh);
@@ -70,6 +89,7 @@ export function createClassicHouse(matsByType) {
     hole.closePath();
     shape.holes.push(hole);
     const geo = new THREE.ExtrudeGeometry(shape, { depth: T, bevelEnabled: false });
+    generateUVs(geo);
     const mesh = new THREE.Mesh(geo, matsByType.walls);
     mesh.rotation.y = Math.PI/2;
     mesh.position.set(W/2 + T/2, 0, 0);
@@ -94,6 +114,7 @@ export function createClassicHouse(matsByType) {
     hole.closePath();
     shape.holes.push(hole);
     const geo = new THREE.ExtrudeGeometry(shape, { depth: T, bevelEnabled: false });
+    generateUVs(geo);
     const mesh = new THREE.Mesh(geo, matsByType.walls);
     mesh.rotation.y = Math.PI/2;
     mesh.position.set(-W/2 - T/2, 0, 0);

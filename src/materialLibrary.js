@@ -1,11 +1,12 @@
 import * as THREE from "three";
 
 export function loadPBRMaterial(textureLoader, materialId) {
-  const base = `./materials/${materialId}`;
+  // Construire l'URL vers `public/materials` en respectant `import.meta.env.BASE_URL`
+  const baseUrl = `${import.meta.env.BASE_URL}materials/${materialId}/`;
 
-  const baseColor = textureLoader.load(`${base}/basecolor.jpg`);
-  const normal = textureLoader.load(`${base}/normal.jpg`);
-  const roughness = textureLoader.load(`${base}/roughness.jpg`);
+  const baseColor = textureLoader.load(`${baseUrl}basecolor.jpg`);
+  const normal = textureLoader.load(`${baseUrl}normal.jpg`);
+  const roughness = textureLoader.load(`${baseUrl}roughness.jpg`);
 
   // color spaces
   baseColor.colorSpace = THREE.SRGBColorSpace;
