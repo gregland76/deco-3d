@@ -42,12 +42,29 @@ function makeRow({ label, key, value, checked, onCheck, onInput, showSlider }) {
     slider.max = "100";
     slider.step = "1";
     slider.value = String(value);
-    slider.addEventListener("input", () => onInput(key, Number(slider.value)));
+    slider.addEventListener("input", () => {
+      onInput(key, Number(slider.value));
+      if (pct) pct.value = String(Math.round(Number(slider.value)));
+    });
     left.appendChild(slider);
 
-    pct = document.createElement("div");
+    pct = document.createElement("input");
     pct.className = "pct";
-    pct.textContent = `${Math.round(value)}%`;
+    pct.type = "number";
+    pct.min = "0";
+    pct.max = "100";
+    pct.step = "1";
+    pct.value = String(Math.round(value));
+    pct.style.width = "52px";
+    pct.addEventListener("input", () => {
+      let v = Number(pct.value);
+      if (Number.isNaN(v)) v = 0;
+      v = Math.max(0, Math.min(100, Math.round(v)));
+      pct.value = String(v);
+      slider.value = String(v);
+      onInput(key, v);
+    });
+
     row.appendChild(left);
     row.appendChild(pct);
   } else {
