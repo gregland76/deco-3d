@@ -8,7 +8,7 @@ import { makeLayeredBaseColorStandardMaterial } from "./layeredBaseColorStandard
 
 // Poids par défaut par type (ordre : silex/brick/stone/wood/ardoise)
 const DEFAULT_WEIGHTS = {
-  walls:  { w0: 0, w1: 0, w2: 100, w3: 0,   w4: 0   }, // pierre
+  walls:  { w0: 0, w1: 0, w2: 0, w3: 100,   w4: 0, w5:0, w6:0, w7:0 }, // par défaut Colombage (w3)
   floors: { w3: 100 }, // bois uniquement (w3 -> wood)
   couverture:  { w0: 0, w1: 0, w2: 0,   w3: 0,   w4: 100 }, // ardoise
 };
@@ -86,51 +86,79 @@ const tl = new THREE.TextureLoader();
 const silex = loadPBRMaterial(tl, "silex");
 const brick = loadPBRMaterial(tl, "brick");
 const stone = loadPBRMaterial(tl, "stone");
-const wood = loadPBRMaterial(tl, "wood");
+// Variantes de bois par usage (utiliser explicitement les dossiers dédiés)
+const wood_walls = loadPBRMaterial(tl, "wood-walls");
+const wood_floors = loadPBRMaterial(tl, "wood-floors");
+const wood_couverture = loadPBRMaterial(tl, "wood-couverture");
 const ardoise = loadPBRMaterial(tl, "ardoise");
 const bardeaux = loadPBRMaterial(tl, "bardeaux");
 const tuile = loadPBRMaterial(tl, "tuile");
 const chaume = loadPBRMaterial(tl, "chaume");
 
 // layeredSet order keeps existing base materials first (indices 0..4)
-// and appends new couverture materials so we can map keys specifically.
-const layeredSet = buildLayeredSet([silex, brick, stone, wood, ardoise, bardeaux, tuile, chaume]);
+// We'll build a master set, then create per-type maps replacing the wood slot
+const masterMaterials = [silex, brick, stone, wood_walls, ardoise, bardeaux, tuile, chaume];
+const masterSet = buildLayeredSet(masterMaterials);
 
 // Debug: inspect textures
-console.log('layeredSet.baseColorMaps', layeredSet.baseColorMaps);
-layeredSet.baseColorMaps.forEach((t, i) => {
+console.log('masterSet.baseColorMaps', masterSet.baseColorMaps);
+masterSet.baseColorMaps.forEach((t, i) => {
   console.log(`tex[${i}]`, { width: t?.image?.width, height: t?.image?.height, colorSpace: t?.colorSpace, encoding: t?.encoding });
 });
 
 // Stable materials (MeshStandardMaterial + basecolor mix only)
+// Construire des jeux de maps par type en remplaçant l'index du bois (3)
+const masterMaps = masterSet.baseColorMaps;
+function mapsWithWoodVariant(woodTex) {
+  const m = masterMaps.slice();
+  if (woodTex && woodTex.baseColor) m[3] = woodTex.baseColor;
+  return m;
+}
+
 const wallsMat = makeLayeredBaseColorStandardMaterial({
-  baseColorMaps: layeredSet.baseColorMaps,
+  baseColorMaps: mapsWithWoodVariant(wood_walls),
   tiling: 2,
   roughness: 0.9,
 });
 const floorsMat = makeLayeredBaseColorStandardMaterial({
-  baseColorMaps: layeredSet.baseColorMaps,
+  baseColorMaps: mapsWithWoodVariant(wood_floors),
   tiling: 3,
   roughness: 0.95,
 });
 const couvertureMat = makeLayeredBaseColorStandardMaterial({
-  baseColorMaps: layeredSet.baseColorMaps,
+  baseColorMaps: mapsWithWoodVariant(wood_couverture),
   tiling: 2,
   roughness: 1.0,
 });
 
 const matsByType = { walls: wallsMat, floors: floorsMat, couverture: couvertureMat };
 
+// Safety fallback: for MeshStandardMaterial instances, assign an explicit `map`
+// using the wood-floors variant to ensure the floor shows the expected texture
+if (matsByType.floors && matsByType.floors.map === undefined) {
+  const fm = mapsByType.floors && mapsByType.floors[3];
+  if (fm) {
+    matsByType.floors.map = fm;
+    matsByType.floors.needsUpdate = true;
+    console.log('Assigned explicit floor map from mapsByType.floors[3]');
+  }
+}
+
 // Appliquer les textures de base dès le chargement
 // La fonction applyWeightsToMat est définie ici pour avoir accès à `layeredSet`
-function applyWeightsToMat(mat, w) {
+// mat: THREE.Material, w: weights, maps: baseColorMaps array to use for fallback
+function applyWeightsToMat(mat, w, maps = masterMaps) {
   if (!mat) return;
 
   // Si le matériau expose des uniforms (shader custom), on les met à jour
   if (mat.userData && mat.userData.uniforms) {
+    // Réinitialiser toutes les uniforms wN à 0, puis appliquer les valeurs fournies
+    Object.keys(mat.userData.uniforms).forEach((uk) => {
+      if (/^w\d+$/.test(uk)) mat.userData.uniforms[uk].value = 0.0;
+    });
     Object.entries(w).forEach(([key, value]) => {
       if (mat.userData.uniforms[key]) {
-        mat.userData.uniforms[key].value = value / 100;
+        mat.userData.uniforms[key].value = (Number(value) || 0) / 100;
       }
     });
     return;
@@ -145,7 +173,7 @@ function applyWeightsToMat(mat, w) {
     if (v > maxVal) { maxVal = v; maxKey = k; }
   }
   const idx = Number(maxKey.replace(/\D/g, ""));
-  const maps = layeredSet.baseColorMaps;
+  // maps param fournit l'ensemble de textures à utiliser pour le fallback
   if (Number.isFinite(idx) && maps && maps[idx]) {
     mat.map = maps[idx];
     mat.needsUpdate = true;
@@ -153,12 +181,59 @@ function applyWeightsToMat(mat, w) {
 }
 
 // Appliquer les textures de base dès le chargement
-Object.entries(matsByType).forEach(([type, mat]) => applyWeightsToMat(mat, DEFAULT_WEIGHTS[type]));
+// Appliquer les textures de base dès le chargement en passant les maps correspondant au type
+const mapsByType = {
+  walls: mapsWithWoodVariant(wood_walls),
+  floors: mapsWithWoodVariant(wood_floors),
+  couverture: mapsWithWoodVariant(wood_couverture),
+};
+
+Object.entries(matsByType).forEach(([type, mat]) => applyWeightsToMat(mat, DEFAULT_WEIGHTS[type], mapsByType[type]));
+
+// Debug UI: afficher la texture utilisée par le sol (pour vérification rapide)
+(function debugFloorMap() {
+  const el = document.createElement('div');
+  el.id = 'floor-debug';
+  el.style.cssText = 'position:fixed; right:8px; bottom:8px; background:rgba(0,0,0,0.6); color:#fff; padding:6px 8px; font-size:12px; z-index:9999; border-radius:4px;';
+  el.textContent = 'floor map: (attente)';
+  document.body.appendChild(el);
+
+  function fmtSrc(tex) {
+    if (!tex) return 'none';
+    const img = tex.image;
+    if (!img) return '[texture]';
+    return img.currentSrc || img.src || '[image]';
+  }
+
+  function update() {
+    const tex = mapsByType.floors && mapsByType.floors[3];
+    const matMap = matsByType.floors && matsByType.floors.map;
+    const src = fmtSrc(tex);
+    const matSrc = matMap ? (matMap.image ? (matMap.image.currentSrc || matMap.image.src || '[image]') : '[map object]') : 'none';
+    let info = `Floor map: ${src} — material.map: ${matSrc}`;
+    // afficher valeurs des uniforms (poids) si présents
+    const uniforms = matsByType.floors && matsByType.floors.userData && matsByType.floors.userData.uniforms;
+    if (uniforms) {
+      const parts = Object.keys(uniforms)
+        .filter((k) => /^w\d+$/.test(k))
+        .sort((a, b) => Number(a.replace(/\D/g, '')) - Number(b.replace(/\D/g, '')))
+        .map((k) => `${k}:${Math.round((uniforms[k].value || 0) * 100)}`);
+      info += ` | weights: ${parts.join(',')}`;
+    }
+    el.textContent = info;
+  }
+
+  update();
+  const id = setInterval(update, 1000);
+  // retirer le timer si la page est déchargée
+  window.addEventListener('beforeunload', () => clearInterval(id));
+})();
 
 // DEBUG: temporaire — utiliser des MeshStandardMaterial simples pour vérifier les textures
 // Désactive ceci quand le debug est terminé
-if (true) {
-  const tl = layeredSet.baseColorMaps;
+// Mettre à `true` pour forcer un matériau simple durant le debug.
+  if (false) {
+  const tl = masterSet.baseColorMaps;
   const { MeshStandardMaterial } = THREE;
   matsByType.walls = new MeshStandardMaterial({ map: tl[1] });
   matsByType.floors = new MeshStandardMaterial({ map: tl[3] });
@@ -193,7 +268,7 @@ groups.push(
     type: "walls",
     containerId: "group-walls",
     initialWeights: DEFAULT_WEIGHTS.walls,
-    onWeightsChange: (type, w) => applyWeightsToMat(matsByType[type], w),
+      onWeightsChange: (type, w) => applyWeightsToMat(matsByType[type], w, mapsByType[type]),
   })
 );
 groups.push(
@@ -201,7 +276,7 @@ groups.push(
     type: "floors",
     containerId: "group-floors",
     initialWeights: DEFAULT_WEIGHTS.floors,
-    onWeightsChange: (type, w) => applyWeightsToMat(matsByType[type], w),
+      onWeightsChange: (type, w) => applyWeightsToMat(matsByType[type], w, mapsByType[type]),
   })
 );
 groups.push(
@@ -209,7 +284,7 @@ groups.push(
     type: "couverture",
     containerId: "group-couverture",
     initialWeights: DEFAULT_WEIGHTS.couverture,
-    onWeightsChange: (type, w) => applyWeightsToMat(matsByType[type], w),
+      onWeightsChange: (type, w) => applyWeightsToMat(matsByType[type], w, mapsByType[type]),
   })
 );
 
