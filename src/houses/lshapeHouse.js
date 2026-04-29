@@ -20,7 +20,7 @@ export function createLShapeHouse(matsByType) {
   root.add(mesh(new THREE.BoxGeometry(AW, 0.12, AD), matsByType.floors, 0, 0.06, 0));
 
   // Toit plat aile principale
-  root.add(mesh(new THREE.BoxGeometry(AW + 0.3, 0.18, AD + 0.15), matsByType.roofs, 0, AH + 0.09, 0));
+  root.add(mesh(new THREE.BoxGeometry(AW + 0.3, 0.18, AD + 0.15), matsByType.couverture, 0, AH + 0.09, 0));
 
   // Mur Nord (2 fenêtres)
   {
@@ -96,7 +96,7 @@ export function createLShapeHouse(matsByType) {
   root.add(mesh(new THREE.BoxGeometry(BD, 0.12, BW), matsByType.floors, bOffsetX, 0.06, bOffsetZ));
 
   // Toit aile secondaire
-  root.add(mesh(new THREE.BoxGeometry(BD + 0.15, 0.18, BW + 0.15), matsByType.roofs, bOffsetX, BH + 0.09, bOffsetZ));
+  root.add(mesh(new THREE.BoxGeometry(BD + 0.15, 0.18, BW + 0.15), matsByType.couverture, bOffsetX, BH + 0.09, bOffsetZ));
 
   // Mur Nord aile secondaire
   root.add(mesh(new THREE.BoxGeometry(BD, BH, T), matsByType.walls, bOffsetX, BH/2, bOffsetZ - BW/2 - T/2));

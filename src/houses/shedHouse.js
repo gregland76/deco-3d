@@ -105,7 +105,7 @@ export function createShedHouse(matsByType) {
   const roofAngle = Math.atan2(deltaH, D);
 
   const roofGeo = new THREE.BoxGeometry(W + 0.4, 0.15, roofLen + 0.2);
-  const roof = new THREE.Mesh(roofGeo, matsByType.roofs);
+  const roof = new THREE.Mesh(roofGeo, matsByType.couverture);
   roof.rotation.x = roofAngle; // lève le côté -Z (nord)
   roof.position.set(0, (H_FRONT + H_BACK) / 2, 0);
   root.add(roof);
@@ -136,7 +136,7 @@ export function createShedHouse(matsByType) {
   // Poutre longitudinale avant
   const beamFront = new THREE.Mesh(
     new THREE.BoxGeometry(W + 0.6, 0.1, 0.1),
-    matsByType.roofs
+    matsByType.couverture
   );
   beamFront.position.set(0, postH, postZ);
   root.add(beamFront);
@@ -147,7 +147,7 @@ export function createShedHouse(matsByType) {
     const px = -W / 2 + (i + 0.5) * (W / slats);
     const slatMesh = new THREE.Mesh(
       new THREE.BoxGeometry(0.08, 0.08, terrasseDepth + 0.1),
-      matsByType.roofs
+      matsByType.couverture
     );
     slatMesh.position.set(px, postH, D / 2 + terrasseDepth / 2);
     root.add(slatMesh);

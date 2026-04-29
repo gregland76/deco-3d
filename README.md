@@ -2,7 +2,7 @@
 
 Un projet en cours de dev pour Manue.
 
-Visualisateur 3D procédural de maisons avec matériaux PBR superposés (peinture, brique, pierre, bois, ardoise).
+Visualisateur 3D procédural de maisons avec matériaux PBR superposés (silex, brique, pierre, bois, ardoise).
 
 ## Démarrage
 

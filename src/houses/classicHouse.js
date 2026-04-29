@@ -31,7 +31,7 @@ export function createClassicHouse(matsByType) {
   // Toit plat
   const roof = new THREE.Mesh(
     new THREE.BoxGeometry(W + 0.3, 0.18, D + 0.15),
-    matsByType.roofs
+    matsByType.couverture
   );
   roof.position.set(0, H + 0.09, 0);
   root.add(roof);

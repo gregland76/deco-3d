@@ -1,14 +1,15 @@
 import { rebalanceWeights } from "./weights.js";
 
 const LAYERS_BY_TYPE = {
-  walls: ["Peinture", "Brique", "Pierre", "Bois"],
-  floors: ["Peinture", "Brique", "Pierre", "Bois", "Ardoise"],
-  roofs: ["Peinture", "Brique", "Pierre", "Bois", "Ardoise"],
+  walls: ["Silex", "Brique", "Pierre", "Bois"],
+  floors: ["Bois"],
+  couverture: ["Bois", "Bardeaux", "Tuile de pays", "Chaume", "Ardoise"],
 };
 const KEYS_BY_TYPE = {
   walls: ["w0", "w1", "w2", "w3"],
-  floors: ["w0", "w1", "w2", "w3", "w4"],
-  roofs: ["w0", "w1", "w2", "w3", "w4"],
+  floors: ["w3"],
+  // mapping to layeredSet indices: wood=w3, bardeaux=w5, tuile=w6, chaume=w7, ardoise=w4
+  couverture: ["w3", "w5", "w6", "w7", "w4"],
 };
 
 function makeRow({ label, key, value, checked, onCheck, onInput, showSlider }) {
@@ -97,7 +98,7 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
     // Nettoyer le container
     container.innerHTML = "";
     const enabledKeys = getEnabledKeys();
-    const showSliders = enabledKeys.length > 1;
+    const showSliders = (type === "couverture") ? false : (enabledKeys.length > 1);
     for (let i = 0; i < KEYS.length; i++) {
       const k = KEYS[i];
       const { row, slider, pct, checkbox } = makeRow({
@@ -115,6 +116,31 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
   }
 
   function setEnabled(key, checked) {
+    // Pour 'couverture' : comportement mutuellement exclusif
+    if (type === "couverture") {
+      if (checked) {
+        // cocher une option décoche toutes les autres
+        KEYS.forEach((k) => {
+          state.enabled[k] = (k === key);
+          state.weights[k] = (k === key) ? 100 : 0;
+        });
+      } else {
+        // si on décoche la seule option, rétablir la première option
+        state.enabled[key] = false;
+        const enabledKeys = getEnabledKeys();
+        if (enabledKeys.length === 0) {
+          KEYS.forEach((k, i) => {
+            state.enabled[k] = (i === 0);
+            state.weights[k] = (i === 0) ? 100 : 0;
+          });
+        }
+      }
+      syncUI();
+      onWeightsChange(type, state.weights);
+      return;
+    }
+
+    // Comportement par défaut pour les autres types
     state.enabled[key] = checked;
     const enabledKeys = getEnabledKeys();
     // Si aucune case cochée, on force la première

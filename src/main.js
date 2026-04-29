@@ -6,11 +6,11 @@ import { createProceduralHouse } from "./houseProcedural.js";
 import { loadPBRMaterial, buildLayeredSet } from "./materialLibrary.js";
 import { makeLayeredBaseColorStandardMaterial } from "./layeredBaseColorStandardMaterial.js";
 
-// Poids par défaut par type (ordre : paint/brick/stone/wood/ardoise)
+// Poids par défaut par type (ordre : silex/brick/stone/wood/ardoise)
 const DEFAULT_WEIGHTS = {
   walls:  { w0: 0, w1: 0, w2: 100, w3: 0,   w4: 0   }, // pierre
-  floors: { w0: 0, w1: 0, w2: 0,   w3: 100, w4: 0   }, // bois
-  roofs:  { w0: 0, w1: 0, w2: 0,   w3: 0,   w4: 100 }, // ardoise
+  floors: { w3: 100 }, // bois uniquement (w3 -> wood)
+  couverture:  { w0: 0, w1: 0, w2: 0,   w3: 0,   w4: 100 }, // ardoise
 };
 const searchParams = new URLSearchParams(window.location.search);
 const forceShowUi = searchParams.get("showUi") === "1";
@@ -83,14 +83,18 @@ scene.add(sun);
 
 // Load textures
 const tl = new THREE.TextureLoader();
-const paint = loadPBRMaterial(tl, "paint");
+const silex = loadPBRMaterial(tl, "silex");
 const brick = loadPBRMaterial(tl, "brick");
 const stone = loadPBRMaterial(tl, "stone");
 const wood = loadPBRMaterial(tl, "wood");
-const slate = loadPBRMaterial(tl, "ardoise");
+const ardoise = loadPBRMaterial(tl, "ardoise");
+const bardeaux = loadPBRMaterial(tl, "bardeaux");
+const tuile = loadPBRMaterial(tl, "tuile");
+const chaume = loadPBRMaterial(tl, "chaume");
 
-// UI order: paint/brick/stone/wood/slate
-const layeredSet = buildLayeredSet([paint, brick, stone, wood, slate]);
+// layeredSet order keeps existing base materials first (indices 0..4)
+// and appends new couverture materials so we can map keys specifically.
+const layeredSet = buildLayeredSet([silex, brick, stone, wood, ardoise, bardeaux, tuile, chaume]);
 
 // Debug: inspect textures
 console.log('layeredSet.baseColorMaps', layeredSet.baseColorMaps);
@@ -109,13 +113,13 @@ const floorsMat = makeLayeredBaseColorStandardMaterial({
   tiling: 3,
   roughness: 0.95,
 });
-const roofsMat = makeLayeredBaseColorStandardMaterial({
+const couvertureMat = makeLayeredBaseColorStandardMaterial({
   baseColorMaps: layeredSet.baseColorMaps,
   tiling: 2,
   roughness: 1.0,
 });
 
-const matsByType = { walls: wallsMat, floors: floorsMat, roofs: roofsMat };
+const matsByType = { walls: wallsMat, floors: floorsMat, couverture: couvertureMat };
 
 // Appliquer les textures de base dès le chargement
 // La fonction applyWeightsToMat est définie ici pour avoir accès à `layeredSet`
@@ -158,7 +162,7 @@ if (true) {
   const { MeshStandardMaterial } = THREE;
   matsByType.walls = new MeshStandardMaterial({ map: tl[1] });
   matsByType.floors = new MeshStandardMaterial({ map: tl[3] });
-  matsByType.roofs = new MeshStandardMaterial({ map: tl[4] });
+  matsByType.couverture = new MeshStandardMaterial({ map: tl[4] });
 }
 
 try {
@@ -202,9 +206,9 @@ groups.push(
 );
 groups.push(
   mountTypeGroup({
-    type: "roofs",
-    containerId: "group-roofs",
-    initialWeights: DEFAULT_WEIGHTS.roofs,
+    type: "couverture",
+    containerId: "group-couverture",
+    initialWeights: DEFAULT_WEIGHTS.couverture,
     onWeightsChange: (type, w) => applyWeightsToMat(matsByType[type], w),
   })
 );

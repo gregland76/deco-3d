@@ -11,7 +11,7 @@ export function createAtriumHouse(matsByType) {
   floor.position.set(0, 0.06, 0);
   root.add(floor);
 
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(width + 0.5, 0.14, depth + 0.5), matsByType.roofs);
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(width + 0.5, 0.14, depth + 0.5), matsByType.couverture);
   roof.position.set(0, height + 0.55, 0);
   root.add(roof);
 
@@ -107,7 +107,7 @@ export function createAtriumHouse(matsByType) {
     root.add(wing);
   });
 
-  const canopy = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.12, 1.9), matsByType.roofs);
+  const canopy = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.12, 1.9), matsByType.couverture);
   canopy.position.set(0, height + 0.08, depth / 2 - 0.85);
   root.add(canopy);
 
