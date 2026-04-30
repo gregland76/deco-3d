@@ -8,7 +8,10 @@ const LAYERS_BY_TYPE = {
   walls: [
     { label: "Silex", key: "w0" },
     { label: "Brique", key: "w1" },
-    { label: "Pierre", key: "w2" },
+    { label: "Pierre", children: [
+      { label: "Pierre calcaire de taille", key: "w2" },
+      { label: "Moellon calcaire", key: "w8" },
+    ] },
     { label: "Bois", children: [
       { label: "Colombage", key: "w3" },
       { label: "Bardeaux", key: "w5" },
