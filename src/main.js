@@ -190,44 +190,8 @@ const mapsByType = {
 
 Object.entries(matsByType).forEach(([type, mat]) => applyWeightsToMat(mat, DEFAULT_WEIGHTS[type], mapsByType[type]));
 
-// Debug UI: afficher la texture utilisée par le sol (pour vérification rapide)
-(function debugFloorMap() {
-  const el = document.createElement('div');
-  el.id = 'floor-debug';
-  el.style.cssText = 'position:fixed; right:8px; bottom:8px; background:rgba(0,0,0,0.6); color:#fff; padding:6px 8px; font-size:12px; z-index:9999; border-radius:4px;';
-  el.textContent = 'floor map: (attente)';
-  document.body.appendChild(el);
-
-  function fmtSrc(tex) {
-    if (!tex) return 'none';
-    const img = tex.image;
-    if (!img) return '[texture]';
-    return img.currentSrc || img.src || '[image]';
-  }
-
-  function update() {
-    const tex = mapsByType.floors && mapsByType.floors[3];
-    const matMap = matsByType.floors && matsByType.floors.map;
-    const src = fmtSrc(tex);
-    const matSrc = matMap ? (matMap.image ? (matMap.image.currentSrc || matMap.image.src || '[image]') : '[map object]') : 'none';
-    let info = `Floor map: ${src} — material.map: ${matSrc}`;
-    // afficher valeurs des uniforms (poids) si présents
-    const uniforms = matsByType.floors && matsByType.floors.userData && matsByType.floors.userData.uniforms;
-    if (uniforms) {
-      const parts = Object.keys(uniforms)
-        .filter((k) => /^w\d+$/.test(k))
-        .sort((a, b) => Number(a.replace(/\D/g, '')) - Number(b.replace(/\D/g, '')))
-        .map((k) => `${k}:${Math.round((uniforms[k].value || 0) * 100)}`);
-      info += ` | weights: ${parts.join(',')}`;
-    }
-    el.textContent = info;
-  }
-
-  update();
-  const id = setInterval(update, 1000);
-  // retirer le timer si la page est déchargée
-  window.addEventListener('beforeunload', () => clearInterval(id));
-})();
+// Tooltip de debug supprimé (affiché précédemment en bas à droite)
+// Si nécessaire, réactiver manuellement la fonction de debugFloorMap.
 
 // DEBUG: temporaire — utiliser des MeshStandardMaterial simples pour vérifier les textures
 // Désactive ceci quand le debug est terminé
