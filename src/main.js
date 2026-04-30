@@ -10,7 +10,7 @@ import { makeLayeredBaseColorStandardMaterial } from "./layeredBaseColorStandard
 const DEFAULT_WEIGHTS = {
   walls:  { w0: 0, w1: 0, w2: 0, w3: 100,   w4: 0, w5:0, w6:0, w7:0, w8: 0 }, // par défaut Colombage (w3)
   floors: { w3: 100 }, // bois uniquement (w3 -> wood)
-  couverture:  { w0: 0, w1: 0, w2: 0,   w3: 0,   w4: 100 }, // ardoise
+  couverture:  { w0: 0, w1: 0, w2: 0, w3: 0, w4: 100, w5: 0, w6: 0, w7: 0, w9: 0, w10: 0 }, // ardoise
 };
 const searchParams = new URLSearchParams(window.location.search);
 const forceShowUi = searchParams.get("showUi") === "1";
@@ -92,14 +92,16 @@ const wood_floors = loadPBRMaterial(tl, "wood-floors");
 const wood_couverture = loadPBRMaterial(tl, "wood-couverture");
 const ardoise = loadPBRMaterial(tl, "ardoise");
 const bardeaux = loadPBRMaterial(tl, "bardeaux");
-const tuile = loadPBRMaterial(tl, "tuile");
+const tuile_sable = loadPBRMaterial(tl, "tuile-sable-champagne");
+const tuile_rouge = loadPBRMaterial(tl, "tuile-rouge-vieilli");
+const tuile_brun = loadPBRMaterial(tl, "tuile-brun-vieilli");
 const chaume = loadPBRMaterial(tl, "chaume");
 // Nouveau matériau pour la variante 'Moellon calcaire'
 const stone_moellons = loadPBRMaterial(tl, "stone-moellons");
 
 // layeredSet order keeps existing base materials first (indices 0..4)
 // We'll build a master set, then create per-type maps replacing the wood slot
-const masterMaterials = [silex, brick, stone, wood_walls, ardoise, bardeaux, tuile, chaume, stone_moellons];
+const masterMaterials = [silex, brick, stone, wood_walls, ardoise, bardeaux, tuile_sable, chaume, stone_moellons, tuile_brun, tuile_rouge];
 const masterSet = buildLayeredSet(masterMaterials);
 
 // Debug: inspect textures

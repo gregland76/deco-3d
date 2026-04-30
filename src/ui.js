@@ -21,7 +21,11 @@ const LAYERS_BY_TYPE = {
   couverture: [
     { label: "Bois", key: "w3" },
     { label: "Bardeaux", key: "w5" },
-    { label: "Tuile de pays", key: "w6" },
+    { label: "Tuile de pays", children: [
+      { label: "Sablé champagne", key: "w6" },
+      { label: "Brun vieilli", key: "w9" },
+      { label: "Rouge vieilli", key: "w10" },
+    ] },
     { label: "Chaume", key: "w7" },
     { label: "Ardoise", key: "w4" },
   ],
