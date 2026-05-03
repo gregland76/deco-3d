@@ -11,11 +11,13 @@
       #panel {
         position: fixed;
         left: 12px;
-        bottom: 12px;
+        bottom: calc(12px + env(safe-area-inset-bottom));
         width: min(210px, calc(100vw - 24px));
         max-height: min(72vh, 620px);
         overflow: auto;
         padding: 12px;
+        /* Ensure content isn't hidden behind mobile nav bars / safe area */
+        padding-bottom: calc(12px + env(safe-area-inset-bottom));
         border-radius: 14px;
         background: rgba(16, 18, 22, 0.72);
         color: #fff;
