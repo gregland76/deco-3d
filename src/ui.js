@@ -8,11 +8,11 @@ const LAYERS_BY_TYPE = {
   walls: [
     { label: "Silex", key: "w0" },
     { label: "Brique", key: "w1" },
-    { label: "Pierre", children: [
+    { label: "Pierre >", children: [
       { label: "Pierre calcaire de taille", key: "w2" },
       { label: "Moellon calcaire", key: "w8" },
     ] },
-    { label: "Bois", children: [
+    { label: "Bois >", children: [
       { label: "Colombage", key: "w3" },
       { label: "Bardeaux", key: "w5" },
     ] },
@@ -21,7 +21,7 @@ const LAYERS_BY_TYPE = {
   couverture: [
     { label: "Bois", key: "w3" },
     { label: "Bardeaux", key: "w5" },
-    { label: "Tuile de pays", children: [
+    { label: "Tuile de pays >", children: [
       { label: "Sablé champagne", key: "w6" },
       { label: "Brun vieilli", key: "w9" },
       { label: "Rouge vieilli", key: "w10" },
@@ -36,18 +36,18 @@ const LAYERS_BY_TYPE = {
     { label: "IPN (acier)", key: "w3" },
   ],
   menuiserie: [
-    { label: "Bois", children: [
+    { label: "Bois >", children: [
       { label: "Naturel", key: "w0" },
-      { label: "Peint", children: [
+      { label: "Peint >", children: [
         { label: "Bleu", key: "w1" },
         { label: "Rouge", key: "w2" },
         { label: "Vert", key: "w3" },
         { label: "Beige", key: "w4" },
       ] },
     ] },
-    { label: "Aluminium", children: [
+    { label: "Aluminium >", children: [
       { label: "Brut", key: "w5" },
-      { label: "Teinté", children: [
+      { label: "Teinté >", children: [
         { label: "Bleu", key: "w6" },
         { label: "Rouge", key: "w7" },
         { label: "Vert", key: "w8" },
