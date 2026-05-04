@@ -2,7 +2,12 @@
 
 ## 2026-05-04
 
-### Interface — Menu textures (ui.js + 3D.html)
+### Interface — Bouton d'aide navigation (3D.html)
+- Ajout d'un bouton `?` en bas à droite de la scène.
+- Au clic : affichage d'un tooltip listant les contrôles souris (tourner, déplacer, zoomer) et tactiles (1 doigt, 2 doigts).
+- Le tooltip se ferme en cliquant ailleurs (via `composedPath()`).
+
+
 - Remplacement des cases à cocher par des **boutons pill** compacts avec état actif visible (fond bleu, barre gauche `#5aadff`, `✓` coloré).
 - Hiérarchie visuelle à 3 niveaux avec dégradé de clarté : conteneur sombre → L1 (groupes) → L2 (sous-groupes) → feuilles.
 - Groupes L1 : fond gris solide, texte gras, bordure visible.

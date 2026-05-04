@@ -232,6 +232,62 @@ body.embed-ui-hidden #topbar {
   #panel label { font-size: 12px; }
 }
 
+/* ── Bouton d'aide + tooltip ──────────────────────────────── */
+#help-wrapper {
+  position: fixed;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 200;
+}
+#helpBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(16,18,22,0.72);
+  color: rgba(255,255,255,0.75);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: background 150ms ease;
+}
+#helpBtn:hover { background: rgba(40,48,60,0.92); color: #fff; }
+
+#help-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  padding: 12px 14px;
+  background: rgba(12,16,22,0.92);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: rgba(255,255,255,0.85);
+  font-size: 12px;
+  line-height: 1.6;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+}
+#help-tooltip.visible { display: block; }
+#help-tooltip table { width: 100%; border-collapse: collapse; }
+#help-tooltip td { padding: 2px 4px; vertical-align: top; }
+#help-tooltip td:first-child { white-space: nowrap; color: rgba(255,255,255,0.5); padding-right: 8px; }
+#help-tooltip .help-title {
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 6px;
+}
+
 
 
   
@@ -239,6 +295,20 @@ body.embed-ui-hidden #topbar {
   </head>
   <body>
 <div id="app"></div>
+
+    <div id="help-wrapper">
+      <button id="helpBtn" aria-label="Aide navigation" title="Aide navigation">?</button>
+      <div id="help-tooltip" role="tooltip">
+        <div class="help-title">Navigation</div>
+        <table>
+          <tr><td>🖱 Bouton gauche</td><td>Tourner</td></tr>
+          <tr><td>🖱 Bouton droit</td><td>Déplacer</td></tr>
+          <tr><td>🖱 Molette</td><td>Zoomer</td></tr>
+          <tr><td>☝ 1 doigt</td><td>Tourner</td></tr>
+          <tr><td>✌ 2 doigts</td><td>Zoom / déplacer</td></tr>
+        </table>
+      </div>
+    </div>
 
     <div id="panel-wrapper">
       <button id="uiToggle" aria-expanded="true" aria-controls="panel">
@@ -296,6 +366,19 @@ body.embed-ui-hidden #topbar {
         const insidePanel = e.composedPath().some(el => el.id === 'panel' || el.id === 'panel-wrapper');
         if (!insidePanel) {
           allDetails.forEach(d => d.removeAttribute('open'));
+        }
+      });
+
+      // Bouton d'aide navigation
+      const helpBtn = document.getElementById('helpBtn');
+      const helpTooltip = document.getElementById('help-tooltip');
+      helpBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        helpTooltip.classList.toggle('visible');
+      });
+      document.addEventListener('click', (e) => {
+        if (!e.composedPath().some(el => el.id === 'help-wrapper')) {
+          helpTooltip.classList.remove('visible');
         }
       });
     </script>
