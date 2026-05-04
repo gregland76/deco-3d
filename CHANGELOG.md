@@ -2,6 +2,18 @@
 
 ## 2026-05-04
 
+### Interface — Menu textures (ui.js + 3D.html)
+- Remplacement des cases à cocher par des **boutons pill** compacts avec état actif visible (fond bleu, barre gauche `#5aadff`, `✓` coloré).
+- Hiérarchie visuelle à 3 niveaux avec dégradé de clarté : conteneur sombre → L1 (groupes) → L2 (sous-groupes) → feuilles.
+- Groupes L1 : fond gris solide, texte gras, bordure visible.
+- Sous-groupes L2 : bordure en **pointillés** pour les distinguer des L1.
+- `✓` bleu affiché devant la catégorie (`summary`) **ouverte** ayant une texture sélectionnée.
+- Fermeture automatique des groupes frères lors de l'ouverture d'un groupe (ex: ouvrir Bois ferme Pierre).
+- Fermeture automatique de tous les groupes non-ancêtres lors de la sélection d'une texture feuille (ex: cliquer Silex ferme Pierre et Bois).
+- Correction d'un bug : les catégories `<details>` se repliaient à chaque sélection de texture car `syncUI()` reconstruit le DOM et le `click` remontait jusqu'au listener "clic en dehors" — résolu avec `e.composedPath()`.
+- Panneau élargi à `240px`, espacement et padding réduits pour un rendu plus compact.
+- Catégories principales (`summary`) : fond gris, texte MAJUSCULE gras → fond bleu quand ouvertes.
+
 ### Linteaux
 - Ajout du système de **linteaux** sur les 4 façades de toutes les maisons : géométrie creusée via `THREE.Path` holes dans `ExtrudeGeometry` + boîte `BoxGeometry` par-dessus.
 - 4 textures de linteaux : Bois (`w0`), Pierre (`w1`), Brique (`w2`), IPN (`w3`).

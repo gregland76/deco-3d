@@ -13,7 +13,7 @@
         position: fixed;
         left: 12px;
         bottom: calc(12px + env(safe-area-inset-bottom));
-        width: min(210px, calc(100vw - 24px));
+        width: min(240px, calc(100vw - 24px));
         display: flex;
         flex-direction: column;
       }
@@ -22,8 +22,8 @@
         width: 100%;
         max-height: min(72vh, 620px);
         overflow: auto;
-        padding: 12px;
-        padding-bottom: calc(12px + env(safe-area-inset-bottom));
+        padding: 8px;
+        padding-bottom: calc(8px + env(safe-area-inset-bottom));
         border-radius: 0 14px 14px 14px;
         background: rgba(16, 18, 22, 0.72);
         color: #fff;
@@ -34,35 +34,125 @@
         transition: max-height 220ms ease, opacity 220ms ease, padding 220ms ease;
         transform-origin: bottom left;
       }
-      #panel h2 { margin: 0 0 8px 0; font-size: 14px; opacity: 0.9; }
+      #panel h2 { display: none; }
 
       details {
-        border-radius: 12px;
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(255,255,255,0.06);
-        margin-bottom: 10px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.10);
+        margin-bottom: 5px;
       }
       summary {
         cursor: pointer;
-        padding: 10px 12px;
-        font-weight: 650;
-        font-size: 14px;
+        padding: 8px 10px;
+        font-weight: 700;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
         list-style: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #fff;
+        background: rgba(255,255,255,0.10);
+        user-select: none;
       }
+      summary:hover { background: rgba(255,255,255,0.15); }
+      details[open] summary { background: rgba(70,148,230,0.28); color: #cce5ff; border-bottom: 1px solid rgba(70,148,230,0.3); }
+      summary::after { content: "▸"; font-size: 9px; opacity: 0.7; transition: transform 150ms ease; }
+      details[open] summary::after { transform: rotate(90deg); }
+      details[open].has-selection > summary::before { content: "✓ "; color: #5aadff; font-size: 11px; }
       summary::-webkit-details-marker { display:none; }
 
-      .group { padding: 10px 12px 12px 12px; }
-      .row {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 10px;
+      .group { padding: 4px 6px 6px; background: rgba(0,0,0,0.40); }
+
+      /* ── Textures (feuilles) ─────────────────────────────────── */
+      .texture-btn {
+        display: flex;
         align-items: center;
-        margin: 10px 0;
         width: 100%;
+        padding: 5px 8px 5px 10px;
+        margin: 2px 0;
+        background: rgba(255,255,255,0.08);
+        border: none;
+        border-left: 2px solid transparent;
+        border-radius: 4px;
+        color: rgba(255,255,255,0.5);
+        font-size: 12px;
+        font-family: inherit;
+        cursor: pointer;
+        text-align: left;
+        box-sizing: border-box;
+        transition: background 100ms ease, border-color 100ms ease, color 100ms ease;
       }
-      .label { font-size: 13px; opacity: 0.95; }
-      .pct { font-variant-numeric: tabular-nums; font-size: 12px; opacity: 0.9; }
-      .slider { width: 50%; margin-top: 6px; }
+      .texture-btn:hover {
+        background: rgba(255,255,255,0.07);
+        color: rgba(255,255,255,0.9);
+        border-left-color: rgba(255,255,255,0.2);
+      }
+      .texture-btn.active {
+        background: rgba(70,148,230,0.22);
+        border-left-color: #5aadff;
+        color: #fff;
+        font-weight: 700;
+      }
+      .texture-btn.active .btn-label::before {
+        content: "✓ ";
+        color: #5aadff;
+        font-size: 10px;
+      }
+
+      /* ── Groupe niveau 1 ──────────────────────────────────────── */
+      .texture-btn.group-btn {
+        margin-top: 6px;
+        padding: 5px 8px;
+        background: rgba(255,255,255,0.22);
+        border: 1px solid rgba(255,255,255,0.30);
+        border-radius: 4px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+      .texture-btn.group-btn:hover {
+        background: rgba(255,255,255,0.30);
+      }
+      .texture-btn.group-btn.active {
+        background: rgba(70,148,230,0.25);
+        border-color: rgba(70,148,230,0.55);
+        color: #cce5ff;
+      }
+
+      /* ── Sous-groupe niveau 2 ─────────────────────────────────── */
+      .texture-btn.group-btn.indent-1 {
+        margin-top: 3px;
+        padding: 4px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: none;
+        letter-spacing: 0;
+        background: rgba(255,255,255,0.14);
+        border: 1px dashed rgba(255,255,255,0.28);
+        color: rgba(255,255,255,0.80);
+      }
+      .texture-btn.group-btn.indent-1:hover {
+        background: rgba(255,255,255,0.22);
+        color: #fff;
+      }
+      .texture-btn.group-btn.indent-1.active {
+        background: rgba(70,148,230,0.12);
+        border-color: rgba(70,148,230,0.35);
+        border-style: dashed;
+        color: #bbd9ff;
+      }
+
+      /* ── Indentations ─────────────────────────────────────────── */
+      .texture-btn.indent-1 { margin-left: 10px; width: calc(100% - 10px); }
+      .texture-btn.indent-2 { margin-left: 20px; width: calc(100% - 20px); }
+
+      .btn-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .btn-arrow { font-size: 9px; opacity: 0.5; flex-shrink: 0; margin-left: 4px; }
+
       .hint { font-size: 12px; opacity: 0.8; line-height: 1.35; }
 
 
@@ -201,8 +291,10 @@ body.embed-ui-hidden #topbar {
       });
 
       // Clic en dehors du panneau → fermer tous les details
+      // composedPath() préserve le chemin original même si le DOM est reconstruit entre-temps
       document.addEventListener('click', (e) => {
-        if (!e.target.closest('#panel')) {
+        const insidePanel = e.composedPath().some(el => el.id === 'panel' || el.id === 'panel-wrapper');
+        if (!insidePanel) {
           allDetails.forEach(d => d.removeAttribute('open'));
         }
       });

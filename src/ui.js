@@ -57,41 +57,26 @@ const LAYERS_BY_TYPE = {
   ],
 };
 
-function makeRow({ label, key, value, checked, onCheck, onInput, showSlider }) {
-  const row = document.createElement("div");
-  row.className = "row";
+function makeRow({ label, key, checked, onCheck, isGroup = false, isOpen = false }) {
+  const row = document.createElement("button");
+  row.type = "button";
+  row.className = "texture-btn" + (isGroup ? " group-btn" : "") + (checked ? " active" : "");
 
-  const left = document.createElement("div");
+  const labelSpan = document.createElement("span");
+  labelSpan.className = "btn-label";
+  labelSpan.textContent = label.replace(/\s*>$/, "");
+  row.appendChild(labelSpan);
 
-  const checkbox = document.createElement("input");
-  checkbox.type = "checkbox";
-  checkbox.checked = checked;
-  checkbox.style.marginRight = "8px";
-  checkbox.addEventListener("change", () => onCheck(key, checkbox.checked));
-
-  const title = document.createElement("div");
-  title.className = "label";
-  title.textContent = label;
-  title.style.display = "inline";
-
-  left.appendChild(checkbox);
-  left.appendChild(title);
-
-  let slider = null;
-  if (showSlider) {
-    slider = document.createElement("input");
-    slider.className = "slider";
-    slider.type = "range";
-    slider.min = "0";
-    slider.max = "100";
-    slider.step = "1";
-    slider.value = String(value || 0);
-    slider.addEventListener("input", () => onInput(key, Number(slider.value)));
-    left.appendChild(slider);
+  if (isGroup) {
+    const arrow = document.createElement("span");
+    arrow.className = "btn-arrow";
+    arrow.textContent = isOpen ? "▾" : "▸";
+    row.appendChild(arrow);
   }
 
-  row.appendChild(left);
-  return { row, slider, pct: null, checkbox };
+  row.addEventListener("click", () => onCheck(key, !row.classList.contains("active")));
+  const checkbox = { get checked() { return row.classList.contains("active"); } };
+  return { row, slider: null, pct: null, checkbox };
 }
 
 export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeightsChange = () => {} }) {
@@ -188,11 +173,15 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
     // Ne jamais afficher les sliders : uniquement cases à cocher
     const showSliders = false;
 
+    // Mettre à jour la classe has-selection sur le <details> parent
+    const details = container.closest("details");
+    if (details) details.classList.toggle("has-selection", flatKeys.some(k => state.enabled[k]));
+
     for (const it of items) {
       if (it.isChild) continue;
       if (it.isGroup) {
         const key = it.key;
-        const { row, slider, pct, checkbox } = makeRow({ label: it.label, key, value: 0, checked: !!state.enabled[key], onCheck: setEnabled, onInput: setKey, showSlider: false });
+        const { row, slider, pct, checkbox } = makeRow({ label: it.label, key, checked: !!state.enabled[key], onCheck: setEnabled, isGroup: true, isOpen: !!state.open[key] });
 
         container.appendChild(row);
         state.controls[key] = { slider, pct, checkbox };
@@ -203,22 +192,22 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
             const childItem = items.find((x) => x.key === childKey);
             if (childItem.isGroup) {
               // sous-groupe : rendu avec indentation
-              const { row: sgrow, checkbox: sgcb } = makeRow({ label: childItem.label, key: childKey, value: 0, checked: !!state.enabled[childKey], onCheck: setEnabled, onInput: setKey, showSlider: false });
-              sgrow.style.marginLeft = '18px';
+              const { row: sgrow, checkbox: sgcb } = makeRow({ label: childItem.label, key: childKey, checked: !!state.enabled[childKey], onCheck: setEnabled, isGroup: true, isOpen: !!state.open[childKey] });
+              sgrow.classList.add('indent-1');
               container.appendChild(sgrow);
               state.controls[childKey] = { slider: null, pct: null, checkbox: sgcb };
               if (state.open[childKey]) {
                 for (const subChildKey of childItem.children) {
                   const subChildItem = items.find((x) => x.key === subChildKey);
-                  const { row: scrow, slider: scsl, pct: scpct, checkbox: sccb } = makeRow({ label: subChildItem.label, key: subChildKey, value: state.weights[subChildKey], checked: !!state.enabled[subChildKey], onCheck: setEnabled, onInput: setKey, showSlider: false });
-                  scrow.style.marginLeft = '36px';
+                  const { row: scrow, slider: scsl, pct: scpct, checkbox: sccb } = makeRow({ label: subChildItem.label, key: subChildKey, checked: !!state.enabled[subChildKey], onCheck: setEnabled });
+                  scrow.classList.add('indent-2');
                   container.appendChild(scrow);
                   state.controls[subChildKey] = { slider: scsl, pct: scpct, checkbox: sccb };
                 }
               }
             } else {
-              const { row: crow, slider: cslider, pct: cpct, checkbox: ccheckbox } = makeRow({ label: childItem.label, key: childKey, value: state.weights[childKey], checked: !!state.enabled[childKey], onCheck: setEnabled, onInput: setKey, showSlider: state.enabled[childKey] && showSliders });
-              crow.style.marginLeft = '18px';
+              const { row: crow, slider: cslider, pct: cpct, checkbox: ccheckbox } = makeRow({ label: childItem.label, key: childKey, checked: !!state.enabled[childKey], onCheck: setEnabled });
+              crow.classList.add('indent-1');
               container.appendChild(crow);
               state.controls[childKey] = { slider: cslider, pct: cpct, checkbox: ccheckbox };
             }
@@ -228,7 +217,7 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
       }
 
       const key = it.key;
-      const { row, slider, pct, checkbox } = makeRow({ label: it.label, key, value: state.weights[key], checked: !!state.enabled[key], onCheck: setEnabled, onInput: setKey, showSlider: state.enabled[key] && showSliders });
+      const { row, slider, pct, checkbox } = makeRow({ label: it.label, key, checked: !!state.enabled[key], onCheck: setEnabled });
       container.appendChild(row);
       if (key) state.controls[key] = { slider, pct, checkbox };
     }
@@ -269,7 +258,13 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
         state.open[key] = true;
         const ancestors = ancestorKeys(firstChild || key);
         ancestors.forEach(k => { state.open[k] = true; });
-        collapseOtherGroups([key, ...ancestors]);
+        // Fermer les groupes frères (même parent, même niveau)
+        const myParent = parentByChild[key];
+        Object.values(itemByKey).forEach(it => {
+          if (it.isGroup && it.key !== key && parentByChild[it.key] === myParent) {
+            state.open[it.key] = false;
+          }
+        });
         syncUI(); onWeightsChange(type, state.weights); return;
       } else {
         const allDescendantLeaves = flatKeys.filter((k) => {
@@ -283,7 +278,6 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
         if (fallbackParent) {
           const fpAncestors = [fallbackParent, ...ancestorKeys(fallbackParent)];
           fpAncestors.forEach(k => { state.open[k] = true; });
-          collapseOtherGroups(fpAncestors);
         }
         syncUI(); onWeightsChange(type, state.weights); return;
       }
@@ -293,10 +287,12 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
     if (checked) {
       flatKeys.forEach((k) => { state.enabled[k] = (k === key); state.weights[k] = (k === key) ? 100 : 0; });
       updateGroupStates();
-      // ouvrir tous les groupes ancêtres, fermer les autres
+      // Ouvrir les groupes ancêtres, fermer tous les autres groupes
       const ancestors = []; let p = parent; while (p) { ancestors.push(p); p = parentByChild[p]; }
       ancestors.forEach(k => { state.open[k] = true; });
-      collapseOtherGroups(ancestors);
+      Object.values(itemByKey).forEach(it => {
+        if (it.isGroup && !ancestors.includes(it.key)) state.open[it.key] = false;
+      });
       syncUI(); onWeightsChange(type, state.weights); return;
     }
 
