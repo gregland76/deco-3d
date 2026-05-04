@@ -1,11 +1,7 @@
-import { createClassicHouse } from "./houses/classicHouse.js";
-import { createAtriumHouse } from "./houses/atriumHouse.js";
-import { createShedHouse } from "./houses/shedHouse.js";
-import { createLShapeHouse } from "./houses/lshapeHouse.js";
+import { createPavillonHouse }        from "./houses/pavillonHouse.js";
+import { createMaisonDeMaitreHouse }  from "./houses/maisonDeMaitreHouse.js";
 
-export function createProceduralHouse({ matsByType, variant = "classic" }) {
-  if (variant === "atrium") return createAtriumHouse(matsByType);
-  if (variant === "shed") return createShedHouse(matsByType);
-  if (variant === "lshape") return createLShapeHouse(matsByType);
-  return createClassicHouse(matsByType);
+export function createProceduralHouse({ matsByType, variant = "pavillon" }) {
+  if (variant === "maitre") return createMaisonDeMaitreHouse(matsByType);
+  return createPavillonHouse(matsByType);
 }
