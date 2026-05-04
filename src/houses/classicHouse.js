@@ -64,11 +64,30 @@ export function createClassicHouse(matsByType) {
       hole.closePath();
       shape.holes.push(hole);
     });
+    // Perçages linteaux mur Nord
+    [-1, 1].forEach((side) => {
+      const lh = new THREE.Path();
+      lh.moveTo(side * (W/4) - (winW + 0.2) / 2, winY + winH/2);
+      lh.lineTo(side * (W/4) + (winW + 0.2) / 2, winY + winH/2);
+      lh.lineTo(side * (W/4) + (winW + 0.2) / 2, winY + winH/2 + 0.15);
+      lh.lineTo(side * (W/4) - (winW + 0.2) / 2, winY + winH/2 + 0.15);
+      lh.closePath();
+      shape.holes.push(lh);
+    });
     const geo = new THREE.ExtrudeGeometry(shape, { depth: T, bevelEnabled: false });
     generateUVs(geo);
     const mesh = new THREE.Mesh(geo, matsByType.walls);
     mesh.position.set(0, 0, -D/2 - T/2);
     root.add(mesh);
+    // Linteaux au-dessus de chaque fenêtre (mur Nord)
+    [-1, 1].forEach((side) => {
+      const lintel = new THREE.Mesh(
+        new THREE.BoxGeometry(winW + 0.2, 0.15, T + 0.08),
+        matsByType.linteau
+      );
+      lintel.position.set(side * (W/4), winY + winH/2 + 0.075, -D/2);
+      root.add(lintel);
+    });
     // Pas de vitrage : la fenêtre est un vrai trou
   }
 
@@ -88,12 +107,27 @@ export function createClassicHouse(matsByType) {
     hole.lineTo(D/4 - 0.55, winY + winH/2);
     hole.closePath();
     shape.holes.push(hole);
+    // Perçage linteau mur Est (local X=D/4 → world Z=-D/4)
+    const lhE = new THREE.Path();
+    lhE.moveTo(D/4 - (winW + 0.2) / 2, winY + winH/2);
+    lhE.lineTo(D/4 + (winW + 0.2) / 2, winY + winH/2);
+    lhE.lineTo(D/4 + (winW + 0.2) / 2, winY + winH/2 + 0.15);
+    lhE.lineTo(D/4 - (winW + 0.2) / 2, winY + winH/2 + 0.15);
+    lhE.closePath();
+    shape.holes.push(lhE);
     const geo = new THREE.ExtrudeGeometry(shape, { depth: T, bevelEnabled: false });
     generateUVs(geo);
     const mesh = new THREE.Mesh(geo, matsByType.walls);
     mesh.rotation.y = Math.PI/2;
     mesh.position.set(W/2 + T/2, 0, 0);
     root.add(mesh);
+    // Linteau mur Est — centre du mur en X = W/2+T, fenêtre en world Z = -D/4
+    const lintelE = new THREE.Mesh(
+      new THREE.BoxGeometry(T + 0.08, 0.15, winW + 0.2),
+      matsByType.linteau
+    );
+    lintelE.position.set(W/2 + T, winY + winH/2 + 0.075, -D/4);
+    root.add(lintelE);
     // Pas de vitrage : la fenêtre est un vrai trou
   }
 
@@ -113,12 +147,27 @@ export function createClassicHouse(matsByType) {
     hole.lineTo(-D/4 - 0.55, winY + winH/2);
     hole.closePath();
     shape.holes.push(hole);
+    // Perçage linteau mur Ouest (local X=-D/4 → world Z=+D/4)
+    const lhW = new THREE.Path();
+    lhW.moveTo(-D/4 - (winW + 0.2) / 2, winY + winH/2);
+    lhW.lineTo(-D/4 + (winW + 0.2) / 2, winY + winH/2);
+    lhW.lineTo(-D/4 + (winW + 0.2) / 2, winY + winH/2 + 0.15);
+    lhW.lineTo(-D/4 - (winW + 0.2) / 2, winY + winH/2 + 0.15);
+    lhW.closePath();
+    shape.holes.push(lhW);
     const geo = new THREE.ExtrudeGeometry(shape, { depth: T, bevelEnabled: false });
     generateUVs(geo);
     const mesh = new THREE.Mesh(geo, matsByType.walls);
     mesh.rotation.y = Math.PI/2;
     mesh.position.set(-W/2 - T/2, 0, 0);
     root.add(mesh);
+    // Linteau mur Ouest — centre du mur en X = -W/2, fenêtre en world Z = +D/4
+    const lintelW2 = new THREE.Mesh(
+      new THREE.BoxGeometry(T + 0.08, 0.15, winW + 0.2),
+      matsByType.linteau
+    );
+    lintelW2.position.set(-W/2, winY + winH/2 + 0.075, D/4);
+    root.add(lintelW2);
     // Pas de vitrage : la fenêtre est un vrai trou
   }
 

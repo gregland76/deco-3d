@@ -11,6 +11,7 @@ const DEFAULT_WEIGHTS = {
   walls:  { w0: 0, w1: 0, w2: 0, w3: 100,   w4: 0, w5:0, w6:0, w7:0, w8: 0 }, // par défaut Colombage (w3)
   floors: { w3: 100 }, // bois uniquement (w3 -> wood)
   couverture:  { w0: 0, w1: 0, w2: 0, w3: 0, w4: 100, w5: 0, w6: 0, w7: 0, w9: 0, w10: 0 }, // ardoise
+  linteau: { w0: 0, w1: 0, w2: 100, w3: 0 }, // Brique par défaut
 };
 const searchParams = new URLSearchParams(window.location.search);
 const forceShowUi = searchParams.get("showUi") === "1";
@@ -98,6 +99,11 @@ const tuile_brun = loadPBRMaterial(tl, "tuile-brun-vieilli");
 const chaume = loadPBRMaterial(tl, "chaume");
 // Nouveau matériau pour la variante 'Moellon calcaire'
 const stone_moellons = loadPBRMaterial(tl, "stone-moellons");
+// Textures linteaux (Bois, Pierre, Brique, IPN)
+const linteau_bois = loadPBRMaterial(tl, "linteau-bois");
+const linteau_pierre = loadPBRMaterial(tl, "linteau-pierre");
+const linteau_brique = loadPBRMaterial(tl, "linteau-brique");
+const linteau_ipn = loadPBRMaterial(tl, "linteau-ipn");
 
 // layeredSet order keeps existing base materials first (indices 0..4)
 // We'll build a master set, then create per-type maps replacing the wood slot
@@ -135,7 +141,39 @@ const couvertureMat = makeLayeredBaseColorStandardMaterial({
   roughness: 1.0,
 });
 
-const matsByType = { walls: wallsMat, floors: floorsMat, couverture: couvertureMat };
+// Matériau linteau : MeshStandardMaterial simple — swap de map selon la sélection
+// w0=Bois, w1=Pierre, w2=Brique, w3=IPN
+const linteauTextures = [
+  linteau_bois.baseColor,
+  linteau_pierre.baseColor,
+  linteau_brique.baseColor,
+  linteau_ipn.baseColor,
+];
+linteauTextures.forEach((t) => {
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(1, 1);
+  t.colorSpace = THREE.SRGBColorSpace;
+});
+const linteauMat = new THREE.MeshStandardMaterial({
+  map: linteauTextures[2], // Brique par défaut
+  roughness: 0.95,
+  metalness: 0.0,
+  envMapIntensity: 0,
+});
+
+function applyLinteauWeights(w) {
+  const entries = Object.entries(w || {});
+  if (!entries.length) return;
+  let maxKey = entries[0][0], maxVal = entries[0][1];
+  for (const [k, v] of entries) { if (v > maxVal) { maxVal = v; maxKey = k; } }
+  const idx = Number(maxKey.replace(/\D/g, ""));
+  if (Number.isFinite(idx) && linteauTextures[idx]) {
+    linteauMat.map = linteauTextures[idx];
+    linteauMat.needsUpdate = true;
+  }
+}
+
+const matsByType = { walls: wallsMat, floors: floorsMat, couverture: couvertureMat, linteau: linteauMat };
 
 // Safety fallback: for MeshStandardMaterial instances, assign an explicit `map`
 // using the wood-floors variant to ensure the floor shows the expected texture
@@ -192,7 +230,11 @@ const mapsByType = {
   couverture: mapsWithWoodVariant(wood_couverture),
 };
 
-Object.entries(matsByType).forEach(([type, mat]) => applyWeightsToMat(mat, DEFAULT_WEIGHTS[type], mapsByType[type]));
+Object.entries(matsByType).forEach(([type, mat]) => {
+  if (type === "linteau") return; // géré séparément par applyLinteauWeights
+  applyWeightsToMat(mat, DEFAULT_WEIGHTS[type], mapsByType[type]);
+});
+applyLinteauWeights(DEFAULT_WEIGHTS.linteau);
 
 // Tooltip de debug supprimé (affiché précédemment en bas à droite)
 // Si nécessaire, réactiver manuellement la fonction de debugFloorMap.
@@ -208,8 +250,9 @@ Object.entries(matsByType).forEach(([type, mat]) => applyWeightsToMat(mat, DEFAU
   matsByType.couverture = new MeshStandardMaterial({ map: tl[4] });
 }
 
+let house = null;
 try {
-  const house = createProceduralHouse({ matsByType, variant: houseVariant });
+  house = createProceduralHouse({ matsByType, variant: houseVariant });
   // Aligner la maison sur le sol : déplacer pour que la Y minimale soit à 0
   try {
     const box = new THREE.Box3().setFromObject(house);
@@ -253,6 +296,14 @@ groups.push(
     containerId: "group-couverture",
     initialWeights: DEFAULT_WEIGHTS.couverture,
       onWeightsChange: (type, w) => applyWeightsToMat(matsByType[type], w, mapsByType[type]),
+  })
+);
+groups.push(
+  mountTypeGroup({
+    type: "linteau",
+    containerId: "group-linteau",
+    initialWeights: DEFAULT_WEIGHTS.linteau,
+      onWeightsChange: (_type, w) => applyLinteauWeights(w),
   })
 );
 

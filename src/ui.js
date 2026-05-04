@@ -29,6 +29,12 @@ const LAYERS_BY_TYPE = {
     { label: "Chaume", key: "w7" },
     { label: "Ardoise", key: "w4" },
   ],
+  linteau: [
+    { label: "Bois", key: "w0" },
+    { label: "Pierre", key: "w1" },
+    { label: "Brique", key: "w2" },
+    { label: "IPN (acier)", key: "w3" },
+  ],
 };
 
 function makeRow({ label, key, value, checked, onCheck, onInput, showSlider }) {

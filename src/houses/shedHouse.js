@@ -40,10 +40,29 @@ export function createShedHouse(matsByType) {
       hole.closePath();
       shape.holes.push(hole);
     });
+    // Perçages linteaux mur Nord
+    [-1, 1].forEach((side) => {
+      const lh = new THREE.Path();
+      lh.moveTo(side * (W/4) - (winW + 0.2) / 2, winY + winH/2);
+      lh.lineTo(side * (W/4) + (winW + 0.2) / 2, winY + winH/2);
+      lh.lineTo(side * (W/4) + (winW + 0.2) / 2, winY + winH/2 + 0.15);
+      lh.lineTo(side * (W/4) - (winW + 0.2) / 2, winY + winH/2 + 0.15);
+      lh.closePath();
+      shape.holes.push(lh);
+    });
     const geo = new THREE.ExtrudeGeometry(shape, { depth: T, bevelEnabled: false });
     const mesh = new THREE.Mesh(geo, matsByType.walls);
     mesh.position.set(0, 0, -D/2 - T/2);
     root.add(mesh);
+    // Linteaux au-dessus de chaque fenêtre (mur Nord)
+    [-1, 1].forEach((side) => {
+      const lintel = new THREE.Mesh(
+        new THREE.BoxGeometry(winW + 0.2, 0.15, T + 0.08),
+        matsByType.linteau
+      );
+      lintel.position.set(side * (W/4), winY + winH/2 + 0.075, -D/2);
+      root.add(lintel);
+    });
     // Vitres
     [-1, 1].forEach((side) => {
       const glass = new THREE.Mesh(
