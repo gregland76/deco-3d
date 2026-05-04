@@ -88,6 +88,8 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
   }
 
   const state = { type, weights: { ...initialWeights }, enabled: {}, controls: {} };
+  // track which groups are expanded (showing their children)
+  state.open = {};
 
   items.forEach((it) => { if (it.key) state.enabled[it.key] = (initialWeights[it.key] > 0); });
 
@@ -97,6 +99,8 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
     if (it.isGroup) {
       const any = (it.children || []).some((k) => state.enabled[k]);
       state.enabled[it.key] = any;
+      // groups always start collapsed
+      state.open[it.key] = false;
     }
   });
 
@@ -131,6 +135,12 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
     state.weights[flatKeys[0]] = 100;
   }
   updateGroupStates();
+  // open any group whose child is active by default
+  Object.values(itemByKey).forEach((it) => {
+    if (it.isGroup && (it.children || []).some((k) => state.enabled[k])) {
+      state.open[it.key] = true;
+    }
+  });
 
   function syncUI() {
     container.innerHTML = "";
@@ -143,15 +153,36 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
       if (it.isGroup) {
         const key = it.key;
         const { row, slider, pct, checkbox } = makeRow({ label: it.label, key, value: 0, checked: !!state.enabled[key], onCheck: setEnabled, onInput: setKey, showSlider: false });
+
+        // disclosure toggle to show/hide children
+        const left = row.firstChild;
+        const title = left.querySelector('.label');
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.setAttribute('aria-expanded', state.open[key] ? 'true' : 'false');
+        toggle.textContent = state.open[key] ? '▾' : '▸';
+        toggle.style.marginRight = '8px';
+        toggle.style.background = 'transparent';
+        toggle.style.border = 'none';
+        toggle.style.color = 'inherit';
+        toggle.style.cursor = 'pointer';
+        toggle.addEventListener('click', (e) => { e.stopPropagation(); state.open[key] = !state.open[key]; syncUI(); });
+
+        // insert toggle before the label (after checkbox)
+        if (title && title.parentNode) title.parentNode.insertBefore(toggle, title);
+
         container.appendChild(row);
         state.controls[key] = { slider, pct, checkbox };
 
-        for (const childKey of it.children) {
-          const childItem = items.find((x) => x.key === childKey);
-          const { row: crow, slider: cslider, pct: cpct, checkbox: ccheckbox } = makeRow({ label: childItem.label, key: childKey, value: state.weights[childKey], checked: !!state.enabled[childKey], onCheck: setEnabled, onInput: setKey, showSlider: state.enabled[childKey] && showSliders });
-          crow.style.marginLeft = '18px';
-          container.appendChild(crow);
-          state.controls[childKey] = { slider: cslider, pct: cpct, checkbox: ccheckbox };
+        // append children only if group is open
+        if (state.open[key]) {
+          for (const childKey of it.children) {
+            const childItem = items.find((x) => x.key === childKey);
+            const { row: crow, slider: cslider, pct: cpct, checkbox: ccheckbox } = makeRow({ label: childItem.label, key: childKey, value: state.weights[childKey], checked: !!state.enabled[childKey], onCheck: setEnabled, onInput: setKey, showSlider: state.enabled[childKey] && showSliders });
+            crow.style.marginLeft = '18px';
+            container.appendChild(crow);
+            state.controls[childKey] = { slider: cslider, pct: cpct, checkbox: ccheckbox };
+          }
         }
         continue;
       }
@@ -163,21 +194,46 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
     }
   }
 
+  // close all groups except the one identified by keepOpenKey
+  function collapseOtherGroups(keepOpenKey) {
+    Object.values(itemByKey).forEach((it) => {
+      if (it.isGroup && it.key !== keepOpenKey) state.open[it.key] = false;
+    });
+  }
+
   function setEnabled(key, checked) {
     // Mutual exclusion: une seule option active par type
     const item = itemByKey[key];
 
     if (item && item.isGroup) {
       const firstChild = (item.children && item.children[0]);
-      flatKeys.forEach((k) => { state.enabled[k] = (k === firstChild); state.weights[k] = (k === firstChild) ? 100 : 0; });
-      updateGroupStates();
-      syncUI(); onWeightsChange(type, state.weights); return;
+      if (checked) {
+        flatKeys.forEach((k) => { state.enabled[k] = (k === firstChild); state.weights[k] = (k === firstChild) ? 100 : 0; });
+        updateGroupStates();
+        // expand this group, collapse all others
+        state.open[key] = true;
+        collapseOtherGroups(key);
+        syncUI(); onWeightsChange(type, state.weights); return;
+      } else {
+        // on uncheck, pick a fallback option outside this group if possible
+        const fallback = flatKeys.find((k) => !(item.children || []).includes(k)) || firstChild;
+        flatKeys.forEach((k) => { state.enabled[k] = (k === fallback); state.weights[k] = (k === fallback) ? 100 : 0; });
+        updateGroupStates();
+        // collapse this group; open the group of the fallback if applicable
+        state.open[key] = false;
+        const fallbackParent = parentByChild[fallback];
+        if (fallbackParent) { state.open[fallbackParent] = true; collapseOtherGroups(fallbackParent); }
+        syncUI(); onWeightsChange(type, state.weights); return;
+      }
     }
 
     const parent = parentByChild[key];
     if (checked) {
       flatKeys.forEach((k) => { state.enabled[k] = (k === key); state.weights[k] = (k === key) ? 100 : 0; });
       updateGroupStates();
+      // expand parent group, collapse all others
+      if (parent) { state.open[parent] = true; collapseOtherGroups(parent); }
+      else collapseOtherGroups(null);
       syncUI(); onWeightsChange(type, state.weights); return;
     }
 
@@ -194,6 +250,14 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
       flatKeys.forEach((k) => { state.enabled[k] = (k === pick); state.weights[k] = (k === pick) ? 100 : 0; });
     }
     updateGroupStates();
+    // if a child was unchecked and its parent has no enabled children, collapse that parent
+    if (parent) {
+      const p = itemByKey[parent];
+      if (p && p.children) {
+        const any = p.children.some((c) => state.enabled[c]);
+        state.open[parent] = !!any;
+      }
+    }
     syncUI(); onWeightsChange(type, state.weights);
   }
 
