@@ -8,22 +8,31 @@
       html, body { height: 100%; margin: 0; overflow: hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
       #app { height: 100%; }
 
-      #panel {
+      /* Wrapper positionné en bas à gauche — contient le tab + le panneau */
+      #panel-wrapper {
         position: fixed;
         left: 12px;
         bottom: calc(12px + env(safe-area-inset-bottom));
         width: min(210px, calc(100vw - 24px));
+        display: flex;
+        flex-direction: column;
+      }
+
+      #panel {
+        width: 100%;
         max-height: min(72vh, 620px);
         overflow: auto;
         padding: 12px;
-        /* Ensure content isn't hidden behind mobile nav bars / safe area */
         padding-bottom: calc(12px + env(safe-area-inset-bottom));
-        border-radius: 14px;
+        border-radius: 0 14px 14px 14px;
         background: rgba(16, 18, 22, 0.72);
         color: #fff;
         -webkit-backdrop-filter: blur(10px);
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255,255,255,0.08);
+        border-top: none;
+        transition: max-height 220ms ease, opacity 220ms ease, padding 220ms ease;
+        transform-origin: bottom left;
       }
       #panel h2 { margin: 0 0 8px 0; font-size: 14px; opacity: 0.9; }
 
@@ -74,63 +83,63 @@
         margin-top: 10px;
       }
 
-/* Bouton toggle UI */
+/* Onglet-interrupteur attaché en haut du panneau */
 #uiToggle {
-  position: fixed;
-  top: 14px;
-  left: 14px;
-  z-index: 10000;
+  align-self: flex-start;
+  padding: 6px 14px;
+  border-radius: 10px 10px 0 0;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-bottom: none;
+  background: rgba(16, 18, 22, 0.72);
+  color: rgba(255,255,255,0.88);
+  font: 13px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 150ms ease;
+}
+#uiToggle:hover { background: rgba(30, 33, 40, 0.85); }
+#uiToggle .toggle-arrow {
+  font-size: 10px;
+  transition: transform 220ms ease;
+  display: inline-block;
+}
 
-  padding: 8px 10px;
+/* Etat caché : panneau replié */
+body.ui-collapsed #panel {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border: none;
+}
+body.ui-collapsed #uiToggle {
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(0,0,0,0.45);
-  color: rgba(255,255,255,0.92);
-  font: 13px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+}
+body.ui-collapsed #uiToggle .toggle-arrow {
+  transform: rotate(-90deg);
 }
 
-/* Par défaut: on laisse le panneau visible */
-#panel {
-  transition: transform 180ms ease, opacity 180ms ease;
-}
-
-/* Etat caché (on décale hors écran) */
-body.ui-collapsed #panel {
-  transform: translateX(-110%);
-  opacity: 0.0;
-  pointer-events: none;
-}
-
-body.embed-ui-hidden #panel,
-body.embed-ui-hidden #topbar,
-body.embed-ui-hidden #uiToggle {
+body.embed-ui-hidden #panel-wrapper,
+body.embed-ui-hidden #topbar {
   opacity: 0;
   pointer-events: none;
 }
 
-body.embed-ui-hidden #panel {
-  transform: translateX(-110%);
-}
-
 /* Ajustements mobile */
 @media (max-width: 520px) {
-  /* Panneau plus petit */
-  #panel {
-    width: min(140px, 60vw);
-    font-size: 12px;
+  #panel-wrapper {
+    width: min(160px, 65vw);
   }
-
-  /* Sliders plus fins */
-  #panel input[type="range"] {
-    height: 18px;
-  }
-
-  /* Labels plus compacts si tu en as */
-  #panel label {
-    font-size: 12px;
-  }
+  #panel { font-size: 12px; }
+  #panel input[type="range"] { height: 18px; }
+  #panel label { font-size: 12px; }
 }
 
 
@@ -139,13 +148,13 @@ body.embed-ui-hidden #panel {
     </style>
   </head>
   <body>
-    <button id="uiToggle" aria-expanded="true" aria-controls="panel">
-  Curseurs ON/OFF
-</button>
-
 <div id="app"></div>
 
-    <div id="panel">
+    <div id="panel-wrapper">
+      <button id="uiToggle" aria-expanded="true" aria-controls="panel">
+        Textures <span class="toggle-arrow">▼</span>
+      </button>
+      <div id="panel">
       <h2>Textures</h2>
 
       <details>
@@ -165,6 +174,7 @@ body.embed-ui-hidden #panel {
 
       <!-- (texte d'aide supprimé, plus nécessaire) -->
       <button class="btn panel-reset" id="resetBtn">Réinitialiser</button>
+    </div>
     </div>
 
     <!-- Accordéon : un seul details ouvert à la fois -->
