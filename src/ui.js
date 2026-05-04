@@ -37,8 +37,8 @@ const LAYERS_BY_TYPE = {
   ],
   menuiserie: [
     { label: "Bois", children: [
-      { label: "Bois Naturel", key: "w0" },
-      { label: "Bois Peint", children: [
+      { label: "Naturel", key: "w0" },
+      { label: "Peint", children: [
         { label: "Bleu", key: "w1" },
         { label: "Rouge", key: "w2" },
         { label: "Vert", key: "w3" },
@@ -194,23 +194,6 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
         const key = it.key;
         const { row, slider, pct, checkbox } = makeRow({ label: it.label, key, value: 0, checked: !!state.enabled[key], onCheck: setEnabled, onInput: setKey, showSlider: false });
 
-        // disclosure toggle to show/hide children
-        const left = row.firstChild;
-        const title = left.querySelector('.label');
-        const toggle = document.createElement('button');
-        toggle.type = 'button';
-        toggle.setAttribute('aria-expanded', state.open[key] ? 'true' : 'false');
-        toggle.textContent = state.open[key] ? '▾' : '▸';
-        toggle.style.marginRight = '8px';
-        toggle.style.background = 'transparent';
-        toggle.style.border = 'none';
-        toggle.style.color = 'inherit';
-        toggle.style.cursor = 'pointer';
-        toggle.addEventListener('click', (e) => { e.stopPropagation(); state.open[key] = !state.open[key]; syncUI(); });
-
-        // insert toggle before the label (after checkbox)
-        if (title && title.parentNode) title.parentNode.insertBefore(toggle, title);
-
         container.appendChild(row);
         state.controls[key] = { slider, pct, checkbox };
 
@@ -219,18 +202,9 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
           for (const childKey of it.children) {
             const childItem = items.find((x) => x.key === childKey);
             if (childItem.isGroup) {
-              // sous-groupe : rendu avec indentation + toggle propre
+              // sous-groupe : rendu avec indentation
               const { row: sgrow, checkbox: sgcb } = makeRow({ label: childItem.label, key: childKey, value: 0, checked: !!state.enabled[childKey], onCheck: setEnabled, onInput: setKey, showSlider: false });
               sgrow.style.marginLeft = '18px';
-              const sgLeft = sgrow.firstChild;
-              const sgTitle = sgLeft && sgLeft.querySelector('.label');
-              const sgToggle = document.createElement('button');
-              sgToggle.type = 'button';
-              sgToggle.setAttribute('aria-expanded', state.open[childKey] ? 'true' : 'false');
-              sgToggle.textContent = state.open[childKey] ? '▾' : '▸';
-              sgToggle.style.cssText = 'margin-right:8px;background:transparent;border:none;color:inherit;cursor:pointer;';
-              sgToggle.addEventListener('click', (e) => { e.stopPropagation(); state.open[childKey] = !state.open[childKey]; syncUI(); });
-              if (sgTitle && sgTitle.parentNode) sgTitle.parentNode.insertBefore(sgToggle, sgTitle);
               container.appendChild(sgrow);
               state.controls[childKey] = { slider: null, pct: null, checkbox: sgcb };
               if (state.open[childKey]) {
