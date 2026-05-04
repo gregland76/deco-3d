@@ -36,14 +36,24 @@ const LAYERS_BY_TYPE = {
     { label: "IPN (acier)", key: "w3" },
   ],
   menuiserie: [
-    { label: "Bois Naturel", key: "w0" },
-    { label: "Bois Peint", children: [
-      { label: "Bleu", key: "w1" },
-      { label: "Rouge", key: "w2" },
-      { label: "Vert", key: "w3" },
-      { label: "Beige", key: "w4" },
+    { label: "Bois", children: [
+      { label: "Bois Naturel", key: "w0" },
+      { label: "Bois Peint", children: [
+        { label: "Bleu", key: "w1" },
+        { label: "Rouge", key: "w2" },
+        { label: "Vert", key: "w3" },
+        { label: "Beige", key: "w4" },
+      ] },
     ] },
-    { label: "Aluminium", key: "w5" },
+    { label: "Aluminium", children: [
+      { label: "Brut", key: "w5" },
+      { label: "Teinté", children: [
+        { label: "Bleu", key: "w6" },
+        { label: "Rouge", key: "w7" },
+        { label: "Vert", key: "w8" },
+        { label: "Beige", key: "w9" },
+      ] },
+    ] },
   ],
 };
 
@@ -96,8 +106,17 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
       items.push({ label: entry, key: null });
     } else if (entry.children) {
       const groupKey = `__group_${entry.label.replace(/\s+/g, "_")}`;
-      items.push({ label: entry.label, key: groupKey, isGroup: true, children: entry.children.map((c) => c.key) });
-      for (const child of entry.children) items.push({ label: child.label, key: child.key, isChild: true });
+      const childKeys = entry.children.map((c) => c.children ? `__group_${c.label.replace(/\s+/g, "_")}` : c.key);
+      items.push({ label: entry.label, key: groupKey, isGroup: true, children: childKeys });
+      for (const child of entry.children) {
+        if (child.children) {
+          const subGroupKey = `__group_${child.label.replace(/\s+/g, "_")}`;
+          items.push({ label: child.label, key: subGroupKey, isGroup: true, isChild: true, children: child.children.map((c) => c.key) });
+          for (const subChild of child.children) items.push({ label: subChild.label, key: subChild.key, isChild: true });
+        } else {
+          items.push({ label: child.label, key: child.key, isChild: true });
+        }
+      }
     } else {
       items.push({ label: entry.label, key: entry.key });
     }
@@ -130,11 +149,16 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
   function getEnabledKeys() { return Object.keys(state.enabled).filter((k) => state.enabled[k]); }
 
   function updateGroupStates() {
-    // Met à jour l'état des groupes en fonction de l'état de leurs enfants
+    // Met à jour l'état des groupes en fonction de l'état de leurs enfants (récursif)
+    function anyLeafEnabled(children) {
+      return (children || []).some((k) => {
+        const it = itemByKey[k];
+        if (it && it.isGroup) return anyLeafEnabled(it.children);
+        return !!state.enabled[k];
+      });
+    }
     Object.values(itemByKey).forEach((it) => {
-      if (it.isGroup) {
-        state.enabled[it.key] = (it.children || []).some((k) => !!state.enabled[k]);
-      }
+      if (it.isGroup) state.enabled[it.key] = anyLeafEnabled(it.children);
     });
   }
 
@@ -194,10 +218,36 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
         if (state.open[key]) {
           for (const childKey of it.children) {
             const childItem = items.find((x) => x.key === childKey);
-            const { row: crow, slider: cslider, pct: cpct, checkbox: ccheckbox } = makeRow({ label: childItem.label, key: childKey, value: state.weights[childKey], checked: !!state.enabled[childKey], onCheck: setEnabled, onInput: setKey, showSlider: state.enabled[childKey] && showSliders });
-            crow.style.marginLeft = '18px';
-            container.appendChild(crow);
-            state.controls[childKey] = { slider: cslider, pct: cpct, checkbox: ccheckbox };
+            if (childItem.isGroup) {
+              // sous-groupe : rendu avec indentation + toggle propre
+              const { row: sgrow, checkbox: sgcb } = makeRow({ label: childItem.label, key: childKey, value: 0, checked: !!state.enabled[childKey], onCheck: setEnabled, onInput: setKey, showSlider: false });
+              sgrow.style.marginLeft = '18px';
+              const sgLeft = sgrow.firstChild;
+              const sgTitle = sgLeft && sgLeft.querySelector('.label');
+              const sgToggle = document.createElement('button');
+              sgToggle.type = 'button';
+              sgToggle.setAttribute('aria-expanded', state.open[childKey] ? 'true' : 'false');
+              sgToggle.textContent = state.open[childKey] ? '▾' : '▸';
+              sgToggle.style.cssText = 'margin-right:8px;background:transparent;border:none;color:inherit;cursor:pointer;';
+              sgToggle.addEventListener('click', (e) => { e.stopPropagation(); state.open[childKey] = !state.open[childKey]; syncUI(); });
+              if (sgTitle && sgTitle.parentNode) sgTitle.parentNode.insertBefore(sgToggle, sgTitle);
+              container.appendChild(sgrow);
+              state.controls[childKey] = { slider: null, pct: null, checkbox: sgcb };
+              if (state.open[childKey]) {
+                for (const subChildKey of childItem.children) {
+                  const subChildItem = items.find((x) => x.key === subChildKey);
+                  const { row: scrow, slider: scsl, pct: scpct, checkbox: sccb } = makeRow({ label: subChildItem.label, key: subChildKey, value: state.weights[subChildKey], checked: !!state.enabled[subChildKey], onCheck: setEnabled, onInput: setKey, showSlider: false });
+                  scrow.style.marginLeft = '36px';
+                  container.appendChild(scrow);
+                  state.controls[subChildKey] = { slider: scsl, pct: scpct, checkbox: sccb };
+                }
+              }
+            } else {
+              const { row: crow, slider: cslider, pct: cpct, checkbox: ccheckbox } = makeRow({ label: childItem.label, key: childKey, value: state.weights[childKey], checked: !!state.enabled[childKey], onCheck: setEnabled, onInput: setKey, showSlider: state.enabled[childKey] && showSliders });
+              crow.style.marginLeft = '18px';
+              container.appendChild(crow);
+              state.controls[childKey] = { slider: cslider, pct: cpct, checkbox: ccheckbox };
+            }
           }
         }
         continue;
@@ -210,10 +260,11 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
     }
   }
 
-  // close all groups except the one identified by keepOpenKey
-  function collapseOtherGroups(keepOpenKey) {
+  // close all groups except those listed in keepOpenKeys
+  function collapseOtherGroups(keepOpenKeys) {
+    const keep = Array.isArray(keepOpenKeys) ? keepOpenKeys : [keepOpenKeys];
     Object.values(itemByKey).forEach((it) => {
-      if (it.isGroup && it.key !== keepOpenKey) state.open[it.key] = false;
+      if (it.isGroup && !keep.includes(it.key)) state.open[it.key] = false;
     });
   }
 
@@ -222,23 +273,44 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
     const item = itemByKey[key];
 
     if (item && item.isGroup) {
-      const firstChild = (item.children && item.children[0]);
+      // trouver la première feuille récursivement
+      function firstLeafKey(children) {
+        for (const k of (children || [])) {
+          const it = itemByKey[k];
+          if (it && it.isGroup) { const r = firstLeafKey(it.children); if (r) return r; }
+          else if (/^w\d+$/.test(k)) return k;
+        }
+        return null;
+      }
+      // collecter tous les ancêtres d'une clé
+      function ancestorKeys(k) {
+        const keys = []; let p = parentByChild[k];
+        while (p) { keys.push(p); p = parentByChild[p]; }
+        return keys;
+      }
+      const firstChild = firstLeafKey(item.children);
       if (checked) {
         flatKeys.forEach((k) => { state.enabled[k] = (k === firstChild); state.weights[k] = (k === firstChild) ? 100 : 0; });
         updateGroupStates();
-        // expand this group, collapse all others
         state.open[key] = true;
-        collapseOtherGroups(key);
+        const ancestors = ancestorKeys(firstChild || key);
+        ancestors.forEach(k => { state.open[k] = true; });
+        collapseOtherGroups([key, ...ancestors]);
         syncUI(); onWeightsChange(type, state.weights); return;
       } else {
-        // on uncheck, pick a fallback option outside this group if possible
-        const fallback = flatKeys.find((k) => !(item.children || []).includes(k)) || firstChild;
+        const allDescendantLeaves = flatKeys.filter((k) => {
+          let p = parentByChild[k]; while (p) { if (p === key) return true; p = parentByChild[p]; } return false;
+        });
+        const fallback = flatKeys.find((k) => !allDescendantLeaves.includes(k)) || firstChild;
         flatKeys.forEach((k) => { state.enabled[k] = (k === fallback); state.weights[k] = (k === fallback) ? 100 : 0; });
         updateGroupStates();
-        // collapse this group; open the group of the fallback if applicable
         state.open[key] = false;
         const fallbackParent = parentByChild[fallback];
-        if (fallbackParent) { state.open[fallbackParent] = true; collapseOtherGroups(fallbackParent); }
+        if (fallbackParent) {
+          const fpAncestors = [fallbackParent, ...ancestorKeys(fallbackParent)];
+          fpAncestors.forEach(k => { state.open[k] = true; });
+          collapseOtherGroups(fpAncestors);
+        }
         syncUI(); onWeightsChange(type, state.weights); return;
       }
     }
@@ -247,9 +319,10 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
     if (checked) {
       flatKeys.forEach((k) => { state.enabled[k] = (k === key); state.weights[k] = (k === key) ? 100 : 0; });
       updateGroupStates();
-      // expand parent group, collapse all others
-      if (parent) { state.open[parent] = true; collapseOtherGroups(parent); }
-      else collapseOtherGroups(null);
+      // ouvrir tous les groupes ancêtres, fermer les autres
+      const ancestors = []; let p = parent; while (p) { ancestors.push(p); p = parentByChild[p]; }
+      ancestors.forEach(k => { state.open[k] = true; });
+      collapseOtherGroups(ancestors);
       syncUI(); onWeightsChange(type, state.weights); return;
     }
 

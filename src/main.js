@@ -12,7 +12,7 @@ const DEFAULT_WEIGHTS = {
   floors: { w3: 100 }, // bois uniquement (w3 -> wood)
   couverture:  { w0: 0, w1: 0, w2: 0, w3: 0, w4: 100, w5: 0, w6: 0, w7: 0, w9: 0, w10: 0 }, // ardoise
   linteau: { w0: 0, w1: 0, w2: 100, w3: 0 }, // Brique par défaut
-  menuiserie: { w0: 100, w1: 0, w2: 0, w3: 0, w4: 0, w5: 0 }, // Bois Naturel par défaut
+  menuiserie: { w0: 100, w1: 0, w2: 0, w3: 0, w4: 0, w5: 0, w6: 0, w7: 0, w8: 0, w9: 0 }, // Bois Naturel par défaut
 };
 const searchParams = new URLSearchParams(window.location.search);
 const forceShowUi = searchParams.get("showUi") === "1";
@@ -105,13 +105,17 @@ const linteau_bois = loadPBRMaterial(tl, "linteau-bois");
 const linteau_pierre = loadPBRMaterial(tl, "linteau-pierre");
 const linteau_brique = loadPBRMaterial(tl, "linteau-brique");
 const linteau_ipn = loadPBRMaterial(tl, "linteau-ipn");
-// Textures menuiseries (Bois Naturel, Bois Peint x4, Aluminium)
+// Textures menuiseries (Bois Naturel, Bois Peint x4, Alu Brut, Alu Teinté x4)
 const menuiserie_bois = loadPBRMaterial(tl, "menuiserie-bois-naturel");
 const menuiserie_bois_peint_bleu = loadPBRMaterial(tl, "menuiserie-bois-peint/bleu");
 const menuiserie_bois_peint_rouge = loadPBRMaterial(tl, "menuiserie-bois-peint/rouge");
 const menuiserie_bois_peint_vert = loadPBRMaterial(tl, "menuiserie-bois-peint/vert");
 const menuiserie_bois_peint_beige = loadPBRMaterial(tl, "menuiserie-bois-peint/beige");
-const menuiserie_alu = loadPBRMaterial(tl, "menuiserie-alu");
+const menuiserie_alu_brut = loadPBRMaterial(tl, "menuiserie-alu/brut");
+const menuiserie_alu_teinte_bleu = loadPBRMaterial(tl, "menuiserie-alu/teinte/bleu");
+const menuiserie_alu_teinte_rouge = loadPBRMaterial(tl, "menuiserie-alu/teinte/rouge");
+const menuiserie_alu_teinte_vert = loadPBRMaterial(tl, "menuiserie-alu/teinte/vert");
+const menuiserie_alu_teinte_beige = loadPBRMaterial(tl, "menuiserie-alu/teinte/beige");
 
 // layeredSet order keeps existing base materials first (indices 0..4)
 // We'll build a master set, then create per-type maps replacing the wood slot
@@ -182,14 +186,18 @@ function applyLinteauWeights(w) {
 }
 
 // Matériau menuiserie : MeshStandardMaterial simple — swap de map + propriétés selon sélection
-// w0=Bois Naturel, w1=Bleu, w2=Rouge, w3=Vert, w4=Beige, w5=Aluminium
+// w0=Bois Naturel, w1-w4=Bois Peint, w5=Alu Brut, w6-w9=Alu Teinté
 const menuiserieTextures = [
   menuiserie_bois.baseColor,
   menuiserie_bois_peint_bleu.baseColor,
   menuiserie_bois_peint_rouge.baseColor,
   menuiserie_bois_peint_vert.baseColor,
   menuiserie_bois_peint_beige.baseColor,
-  menuiserie_alu.baseColor,
+  menuiserie_alu_brut.baseColor,
+  menuiserie_alu_teinte_bleu.baseColor,
+  menuiserie_alu_teinte_rouge.baseColor,
+  menuiserie_alu_teinte_vert.baseColor,
+  menuiserie_alu_teinte_beige.baseColor,
 ];
 menuiserieTextures.forEach((t) => {
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
@@ -211,8 +219,8 @@ function applyMenuiserieWeights(w) {
   const idx = Number(maxKey.replace(/\D/g, ""));
   if (Number.isFinite(idx) && menuiserieTextures[idx]) {
     menuiserieMat.map = menuiserieTextures[idx];
-    menuiserieMat.metalness = idx === 5 ? 0.6 : 0.0; // aluminium = métallique
-    menuiserieMat.roughness = idx === 5 ? 0.25 : 0.85;
+    menuiserieMat.metalness = idx >= 5 ? 0.6 : 0.0; // aluminium = métallique
+    menuiserieMat.roughness = idx >= 5 ? 0.25 : 0.85;
     menuiserieMat.needsUpdate = true;
   }
 }
