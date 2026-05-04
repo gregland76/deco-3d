@@ -88,6 +88,18 @@ export function createClassicHouse(matsByType) {
       lintel.position.set(side * (W/4), winY + winH/2 + 0.075, -D/2);
       root.add(lintel);
     });
+    // Menuiseries fenêtres Nord (montants + appui)
+    { const fw = 0.07; const fd = T + 0.04;
+      [-1, 1].forEach((side) => {
+        const cx = side * (W/4);
+        [-1, 1].forEach((s) => {
+          const m = new THREE.Mesh(new THREE.BoxGeometry(fw, winH, fd), matsByType.menuiserie);
+          m.position.set(cx + s * winW/2, winY, -D/2); root.add(m);
+        });
+        const sill = new THREE.Mesh(new THREE.BoxGeometry(winW + fw, fw, fd), matsByType.menuiserie);
+        sill.position.set(cx, winY - winH/2, -D/2); root.add(sill);
+      });
+    }
     // Pas de vitrage : la fenêtre est un vrai trou
   }
 
@@ -128,6 +140,15 @@ export function createClassicHouse(matsByType) {
     );
     lintelE.position.set(W/2 + T, winY + winH/2 + 0.075, -D/4);
     root.add(lintelE);
+    // Menuiserie fenêtre Est
+    { const fw = 0.07; const fd = T + 0.04;
+      [-1, 1].forEach((s) => {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(fd, winH, fw), matsByType.menuiserie);
+        m.position.set(W/2 + T, winY, -D/4 + s * winW/2); root.add(m);
+      });
+      const sill = new THREE.Mesh(new THREE.BoxGeometry(fd, fw, winW + fw), matsByType.menuiserie);
+      sill.position.set(W/2 + T, winY - winH/2, -D/4); root.add(sill);
+    }
     // Pas de vitrage : la fenêtre est un vrai trou
   }
 
@@ -168,6 +189,15 @@ export function createClassicHouse(matsByType) {
     );
     lintelW2.position.set(-W/2, winY + winH/2 + 0.075, D/4);
     root.add(lintelW2);
+    // Menuiserie fenêtre Ouest
+    { const fw = 0.07; const fd = T + 0.04;
+      [-1, 1].forEach((s) => {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(fd, winH, fw), matsByType.menuiserie);
+        m.position.set(-W/2, winY, D/4 + s * winW/2); root.add(m);
+      });
+      const sill = new THREE.Mesh(new THREE.BoxGeometry(fd, fw, winW + fw), matsByType.menuiserie);
+      sill.position.set(-W/2, winY - winH/2, D/4); root.add(sill);
+    }
     // Pas de vitrage : la fenêtre est un vrai trou
   }
 

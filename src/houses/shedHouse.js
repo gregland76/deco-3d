@@ -63,6 +63,18 @@ export function createShedHouse(matsByType) {
       lintel.position.set(side * (W/4), winY + winH/2 + 0.075, -D/2);
       root.add(lintel);
     });
+    // Menuiseries fenêtres Nord
+    { const fw = 0.07; const fd = T + 0.04;
+      [-1, 1].forEach((side) => {
+        const cx = side * (W/4);
+        [-1, 1].forEach((s) => {
+          const m = new THREE.Mesh(new THREE.BoxGeometry(fw, winH, fd), matsByType.menuiserie);
+          m.position.set(cx + s * winW/2, winY, -D/2); root.add(m);
+        });
+        const sill = new THREE.Mesh(new THREE.BoxGeometry(winW + fw, fw, fd), matsByType.menuiserie);
+        sill.position.set(cx, winY - winH/2, -D/2); root.add(sill);
+      });
+    }
     // Vitres
     [-1, 1].forEach((side) => {
       const glass = new THREE.Mesh(

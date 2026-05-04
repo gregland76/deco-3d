@@ -35,6 +35,16 @@ const LAYERS_BY_TYPE = {
     { label: "Brique", key: "w2" },
     { label: "IPN (acier)", key: "w3" },
   ],
+  menuiserie: [
+    { label: "Bois Naturel", key: "w0" },
+    { label: "Bois Peint", children: [
+      { label: "Bleu", key: "w1" },
+      { label: "Rouge", key: "w2" },
+      { label: "Vert", key: "w3" },
+      { label: "Beige", key: "w4" },
+    ] },
+    { label: "Aluminium", key: "w5" },
+  ],
 };
 
 function makeRow({ label, key, value, checked, onCheck, onInput, showSlider }) {

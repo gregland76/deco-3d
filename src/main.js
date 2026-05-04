@@ -12,6 +12,7 @@ const DEFAULT_WEIGHTS = {
   floors: { w3: 100 }, // bois uniquement (w3 -> wood)
   couverture:  { w0: 0, w1: 0, w2: 0, w3: 0, w4: 100, w5: 0, w6: 0, w7: 0, w9: 0, w10: 0 }, // ardoise
   linteau: { w0: 0, w1: 0, w2: 100, w3: 0 }, // Brique par défaut
+  menuiserie: { w0: 100, w1: 0, w2: 0, w3: 0, w4: 0, w5: 0 }, // Bois Naturel par défaut
 };
 const searchParams = new URLSearchParams(window.location.search);
 const forceShowUi = searchParams.get("showUi") === "1";
@@ -85,25 +86,32 @@ scene.add(sun);
 // Load textures
 const tl = new THREE.TextureLoader();
 const silex = loadPBRMaterial(tl, "silex");
-const brick = loadPBRMaterial(tl, "brick");
-const stone = loadPBRMaterial(tl, "stone-Pierre-Calcaire");
+const brick = loadPBRMaterial(tl, "briques");
+const stone = loadPBRMaterial(tl, "pierre/pierre-calcaire-taille");
 // Variantes de bois par usage (utiliser explicitement les dossiers dédiés)
-const wood_walls = loadPBRMaterial(tl, "wood-walls");
+const wood_walls = loadPBRMaterial(tl, "bois/colombage");
 const wood_floors = loadPBRMaterial(tl, "wood-floors");
 const wood_couverture = loadPBRMaterial(tl, "wood-couverture");
 const ardoise = loadPBRMaterial(tl, "ardoise");
-const bardeaux = loadPBRMaterial(tl, "bardeaux");
-const tuile_sable = loadPBRMaterial(tl, "tuile-sable-champagne");
-const tuile_rouge = loadPBRMaterial(tl, "tuile-rouge-vieilli");
-const tuile_brun = loadPBRMaterial(tl, "tuile-brun-vieilli");
+const bardeaux = loadPBRMaterial(tl, "bois/bardeaux");
+const tuile_sable = loadPBRMaterial(tl, "tuile-de-pays/sable-champagne");
+const tuile_rouge = loadPBRMaterial(tl, "tuile-de-pays/rouge-vieilli");
+const tuile_brun = loadPBRMaterial(tl, "tuile-de-pays/brun-vieilli");
 const chaume = loadPBRMaterial(tl, "chaume");
 // Nouveau matériau pour la variante 'Moellon calcaire'
-const stone_moellons = loadPBRMaterial(tl, "stone-moellons");
+const stone_moellons = loadPBRMaterial(tl, "pierre/moellon-calcaire");
 // Textures linteaux (Bois, Pierre, Brique, IPN)
 const linteau_bois = loadPBRMaterial(tl, "linteau-bois");
 const linteau_pierre = loadPBRMaterial(tl, "linteau-pierre");
 const linteau_brique = loadPBRMaterial(tl, "linteau-brique");
 const linteau_ipn = loadPBRMaterial(tl, "linteau-ipn");
+// Textures menuiseries (Bois Naturel, Bois Peint x4, Aluminium)
+const menuiserie_bois = loadPBRMaterial(tl, "menuiserie-bois-naturel");
+const menuiserie_bois_peint_bleu = loadPBRMaterial(tl, "menuiserie-bois-peint/bleu");
+const menuiserie_bois_peint_rouge = loadPBRMaterial(tl, "menuiserie-bois-peint/rouge");
+const menuiserie_bois_peint_vert = loadPBRMaterial(tl, "menuiserie-bois-peint/vert");
+const menuiserie_bois_peint_beige = loadPBRMaterial(tl, "menuiserie-bois-peint/beige");
+const menuiserie_alu = loadPBRMaterial(tl, "menuiserie-alu");
 
 // layeredSet order keeps existing base materials first (indices 0..4)
 // We'll build a master set, then create per-type maps replacing the wood slot
@@ -173,7 +181,43 @@ function applyLinteauWeights(w) {
   }
 }
 
-const matsByType = { walls: wallsMat, floors: floorsMat, couverture: couvertureMat, linteau: linteauMat };
+// Matériau menuiserie : MeshStandardMaterial simple — swap de map + propriétés selon sélection
+// w0=Bois Naturel, w1=Bleu, w2=Rouge, w3=Vert, w4=Beige, w5=Aluminium
+const menuiserieTextures = [
+  menuiserie_bois.baseColor,
+  menuiserie_bois_peint_bleu.baseColor,
+  menuiserie_bois_peint_rouge.baseColor,
+  menuiserie_bois_peint_vert.baseColor,
+  menuiserie_bois_peint_beige.baseColor,
+  menuiserie_alu.baseColor,
+];
+menuiserieTextures.forEach((t) => {
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(1, 1);
+  t.colorSpace = THREE.SRGBColorSpace;
+});
+const menuiserieMat = new THREE.MeshStandardMaterial({
+  map: menuiserieTextures[0], // Bois par défaut
+  roughness: 0.85,
+  metalness: 0.0,
+  envMapIntensity: 0,
+});
+
+function applyMenuiserieWeights(w) {
+  const entries = Object.entries(w || {});
+  if (!entries.length) return;
+  let maxKey = entries[0][0], maxVal = entries[0][1];
+  for (const [k, v] of entries) { if (v > maxVal) { maxVal = v; maxKey = k; } }
+  const idx = Number(maxKey.replace(/\D/g, ""));
+  if (Number.isFinite(idx) && menuiserieTextures[idx]) {
+    menuiserieMat.map = menuiserieTextures[idx];
+    menuiserieMat.metalness = idx === 5 ? 0.6 : 0.0; // aluminium = métallique
+    menuiserieMat.roughness = idx === 5 ? 0.25 : 0.85;
+    menuiserieMat.needsUpdate = true;
+  }
+}
+
+const matsByType = { walls: wallsMat, floors: floorsMat, couverture: couvertureMat, linteau: linteauMat, menuiserie: menuiserieMat };
 
 // Safety fallback: for MeshStandardMaterial instances, assign an explicit `map`
 // using the wood-floors variant to ensure the floor shows the expected texture
@@ -235,6 +279,7 @@ Object.entries(matsByType).forEach(([type, mat]) => {
   applyWeightsToMat(mat, DEFAULT_WEIGHTS[type], mapsByType[type]);
 });
 applyLinteauWeights(DEFAULT_WEIGHTS.linteau);
+applyMenuiserieWeights(DEFAULT_WEIGHTS.menuiserie);
 
 // Tooltip de debug supprimé (affiché précédemment en bas à droite)
 // Si nécessaire, réactiver manuellement la fonction de debugFloorMap.
@@ -304,6 +349,14 @@ groups.push(
     containerId: "group-linteau",
     initialWeights: DEFAULT_WEIGHTS.linteau,
       onWeightsChange: (_type, w) => applyLinteauWeights(w),
+  })
+);
+groups.push(
+  mountTypeGroup({
+    type: "menuiserie",
+    containerId: "group-menuiserie",
+    initialWeights: DEFAULT_WEIGHTS.menuiserie,
+      onWeightsChange: (_type, w) => applyMenuiserieWeights(w),
   })
 );
 
