@@ -175,7 +175,8 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
   // Ajoute une ligne de slider de pondération sous un bouton de texture (murs multi-sélection)
   function appendSliderRow(key, indentClass = '') {
     if (!isMultiSelect || !state.enabled[key] || !/^w\d+$/.test(key)) return;
-    const enabledLeafCount = flatKeys.filter(k => state.enabled[k]).length;
+    const enabledLeaves = flatKeys.filter(k => state.enabled[k]);
+    const enabledLeafCount = enabledLeaves.length;
     if (enabledLeafCount <= 1) return;
     const sliderRow = document.createElement('div');
     sliderRow.className = 'slider-row' + (indentClass ? ' ' + indentClass : '');
@@ -280,8 +281,12 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
       // Feuille : basculer l'activation indépendamment
       if (checked) {
         state.enabled[key] = true;
-        // Conserver le poids existant ou démarrer à 100
         if (!state.weights[key]) state.weights[key] = 100;
+        // Avec exactement 2 textures actives, rééquilibrer à 50/50
+        const enabledLeavesAfter = flatKeys.filter(k => state.enabled[k]);
+        if (enabledLeavesAfter.length === 2) {
+          enabledLeavesAfter.forEach(k => { state.weights[k] = 50; });
+        }
       } else {
         const enabledLeaves = flatKeys.filter(k => state.enabled[k]);
         if (enabledLeaves.length === 1 && enabledLeaves[0] === key) return syncUI();
