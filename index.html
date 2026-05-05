@@ -214,6 +214,38 @@
         height: 18px;
       }
 
+      .thumb-refresh {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 1001;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 999px;
+        background: var(--button-bg);
+        color: var(--text-muted);
+        font-size: 14px;
+        cursor: pointer;
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        transition: background-color 180ms ease, transform 180ms ease;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .viewer:hover .thumb-refresh,
+      .viewer.is-expanded .thumb-refresh {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .thumb-refresh:hover { background: var(--button-hover); color: #fff; }
+      .thumb-refresh.spinning { animation: spin 0.7s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
       .frame-toggle .icon-collapse {
         display: none;
       }
@@ -319,6 +351,7 @@
           <article class="viewer-card">
             <p class="viewer-label">Maison Pavillonnaire</p>
             <div class="viewer" data-viewer data-src="./3D.html?embed=1&variant=pavillon" data-iframe-title="Prévisualisation Déco 3D maison pavillonnaire">
+              <button class="thumb-refresh" type="button" aria-label="Régénérer la vignette Maison Pavillonnaire" title="Régénérer la vignette">↺</button>
               <button class="frame-toggle" type="button" aria-label="Agrandir la vignette Maison Pavillonnaire" aria-expanded="false">
                 <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M8 4H4v4" />
@@ -351,7 +384,41 @@
           <article class="viewer-card">
             <p class="viewer-label">Maison de Maître</p>
             <div class="viewer" data-viewer data-src="./3D.html?embed=1&variant=maitre" data-iframe-title="Prévisualisation Déco 3D maison de maître">
+              <button class="thumb-refresh" type="button" aria-label="Régénérer la vignette Maison de Maître" title="Régénérer la vignette">↺</button>
               <button class="frame-toggle" type="button" aria-label="Agrandir la vignette Maison de Maître" aria-expanded="false">
+                <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M8 4H4v4" />
+                  <path d="M4 4l6 6" />
+                  <path d="M16 20h4v-4" />
+                  <path d="M20 20l-6-6" />
+                  <path d="M20 8V4h-4" />
+                  <path d="M20 4l-6 6" />
+                  <path d="M4 16v4h4" />
+                  <path d="M4 20l6-6" />
+                </svg>
+                <svg class="icon-collapse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 15H4v5" />
+                  <path d="M4 20l7-7" />
+                  <path d="M15 9h5V4" />
+                  <path d="M20 4l-7 7" />
+                  <path d="M15 15h5v5" />
+                  <path d="M20 20l-7-7" />
+                  <path d="M9 9H4V4" />
+                  <path d="M4 4l7 7" />
+                </svg>
+              </button>
+              <div class="viewer-placeholder">
+                <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 24L24 6l20 18"/><path d="M8 21v21h32V21"/><rect x="18" y="28" width="12" height="14"/></svg>
+                <span>Voir en 3D</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="viewer-card">
+            <p class="viewer-label">Maison Test (OBJ)</p>
+            <div class="viewer" data-viewer data-src="./3D.html?embed=1&variant=custom" data-iframe-title="Prévisualisation Déco 3D maison personnalisée">
+              <button class="thumb-refresh" type="button" aria-label="Régénérer la vignette Maison personnalisée" title="Régénérer la vignette">↺</button>
+              <button class="frame-toggle" type="button" aria-label="Agrandir la vignette Maison personnalisée" aria-expanded="false">
                 <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M8 4H4v4" />
                   <path d="M4 4l6 6" />
@@ -527,6 +594,34 @@
       });
 
       if (!thumbBusy && thumbQueue.length) nextThumb();
+
+      // Boutons de régénération de vignette
+      document.querySelectorAll(".thumb-refresh").forEach((btn) => {
+        const viewer = btn.closest("[data-viewer]");
+        if (!viewer) return;
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const variant = extractVariant(viewer.dataset.src);
+          if (!variant) return;
+          try { localStorage.removeItem(THUMB_KEY + variant); } catch {}
+          // retirer la vignette actuelle
+          const ph = viewer.querySelector(".viewer-placeholder");
+          ph.style.backgroundImage = "";
+          ph.classList.remove("has-thumb");
+          // lancer la capture
+          btn.classList.add("spinning");
+          thumbQueue.push({ variant, src: viewer.dataset.src });
+          if (!thumbBusy) nextThumb();
+          // retirer l'animation quand le message revient
+          const stop = (event) => {
+            if (event.data?.type === "deco-3d:screenshot" && event.data.variant === variant) {
+              btn.classList.remove("spinning");
+              window.removeEventListener("message", stop);
+            }
+          };
+          window.addEventListener("message", stop);
+        });
+      });
     </script>
   </body>
 </html>

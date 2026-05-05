@@ -304,25 +304,27 @@ applyMenuiserieWeights(DEFAULT_WEIGHTS.menuiserie);
 }
 
 let house = null;
-try {
-  house = createProceduralHouse({ matsByType, variant: houseVariant });
-  // Aligner la maison sur le sol : déplacer pour que la Y minimale soit à 0
-  try {
-    const box = new THREE.Box3().setFromObject(house);
-    console.log('house bbox before adjust', box.min, box.max);
-    if (box && Number.isFinite(box.min.y)) {
-      house.position.y = -box.min.y;
-      console.log('house positioned to', house.position.y);
-    } else {
-      console.warn('Could not compute house bbox min.y', box);
-    }
-  } catch (e) {
-    console.error('Error computing house bbox', e);
-  }
+const houseResult = createProceduralHouse({ matsByType, variant: houseVariant });
+
+function addHouseToScene(h) {
+  if (!h) return;
+  house = h;
   scene.add(house);
-  console.log('Procedural house added to scene', house);
-} catch (err) {
-  console.error('Error creating or adding procedural house', err);
+  console.log('House added to scene', house);
+}
+
+if (houseResult && typeof houseResult.then === "function") {
+  // Variante asynchrone (ex: custom OBJ)
+  houseResult.then(addHouseToScene).catch((err) => {
+    console.error('Error loading OBJ house', err);
+  });
+} else {
+  // Variante synchrone (pavillon, maitre)
+  try {
+    addHouseToScene(houseResult);
+  } catch (err) {
+    console.error('Error creating procedural house', err);
+  }
 }
 
 // UI
