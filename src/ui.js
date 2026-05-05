@@ -175,6 +175,8 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
   // Ajoute une ligne de slider de pondération sous un bouton de texture (murs multi-sélection)
   function appendSliderRow(key, indentClass = '') {
     if (!isMultiSelect || !state.enabled[key] || !/^w\d+$/.test(key)) return;
+    const enabledLeafCount = flatKeys.filter(k => state.enabled[k]).length;
+    if (enabledLeafCount <= 1) return;
     const sliderRow = document.createElement('div');
     sliderRow.className = 'slider-row' + (indentClass ? ' ' + indentClass : '');
     const slider = document.createElement('input');
