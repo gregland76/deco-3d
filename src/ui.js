@@ -1,4 +1,4 @@
-import { rebalanceWeights } from "./weights.js";
+
 
 // Définition des couches par type. Chaque entrée peut être:
 // - une string simple => élément avec une key dérivée plus bas
@@ -131,6 +131,11 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
 
   const flatKeys = items.map((it) => it.key).filter((k) => /^w\d+$/.test(k));
 
+  // Pour les murs uniquement : multi-sélection avec sliders de pondération
+  const isMultiSelect = type === 'walls';
+  // Références aux éléments slider actifs (réinitialisées à chaque syncUI)
+  const activeSliders = {};
+
   function getEnabledKeys() { return Object.keys(state.enabled).filter((k) => state.enabled[k]); }
 
   function updateGroupStates() {
@@ -167,11 +172,35 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
     }
   });
 
+  // Ajoute une ligne de slider de pondération sous un bouton de texture (murs multi-sélection)
+  function appendSliderRow(key, indentClass = '') {
+    if (!isMultiSelect || !state.enabled[key] || !/^w\d+$/.test(key)) return;
+    const sliderRow = document.createElement('div');
+    sliderRow.className = 'slider-row' + (indentClass ? ' ' + indentClass : '');
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = 0; slider.max = 100;
+    slider.value = Math.round(state.weights[key] || 0);
+    slider.className = 'weight-slider';
+    const pctSpan = document.createElement('span');
+    pctSpan.className = 'weight-pct';
+    pctSpan.textContent = Math.round(state.weights[key] || 0) + '%';
+    activeSliders[key] = { slider, pctSpan };
+    slider.addEventListener('input', () => {
+      state.weights[key] = Number(slider.value);
+      pctSpan.textContent = Math.round(state.weights[key]) + '%';
+      onWeightsChange(type, state.weights);
+    });
+    sliderRow.appendChild(slider);
+    sliderRow.appendChild(pctSpan);
+    container.appendChild(sliderRow);
+  }
+
   function syncUI() {
     container.innerHTML = "";
+    // Réinitialiser les références aux sliders actifs
+    Object.keys(activeSliders).forEach(k => delete activeSliders[k]);
     const enabledKeys = getEnabledKeys();
-    // Ne jamais afficher les sliders : uniquement cases à cocher
-    const showSliders = false;
 
     // Mettre à jour la classe has-selection sur le <details> parent
     const details = container.closest("details");
@@ -202,6 +231,7 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
                   const { row: scrow, slider: scsl, pct: scpct, checkbox: sccb } = makeRow({ label: subChildItem.label, key: subChildKey, checked: !!state.enabled[subChildKey], onCheck: setEnabled });
                   scrow.classList.add('indent-2');
                   container.appendChild(scrow);
+                  appendSliderRow(subChildKey, 'indent-2');
                   state.controls[subChildKey] = { slider: scsl, pct: scpct, checkbox: sccb };
                 }
               }
@@ -209,6 +239,7 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
               const { row: crow, slider: cslider, pct: cpct, checkbox: ccheckbox } = makeRow({ label: childItem.label, key: childKey, checked: !!state.enabled[childKey], onCheck: setEnabled });
               crow.classList.add('indent-1');
               container.appendChild(crow);
+              appendSliderRow(childKey, 'indent-1');
               state.controls[childKey] = { slider: cslider, pct: cpct, checkbox: ccheckbox };
             }
           }
@@ -219,6 +250,7 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
       const key = it.key;
       const { row, slider, pct, checkbox } = makeRow({ label: it.label, key, checked: !!state.enabled[key], onCheck: setEnabled });
       container.appendChild(row);
+      appendSliderRow(key, '');
       if (key) state.controls[key] = { slider, pct, checkbox };
     }
   }
@@ -232,9 +264,35 @@ export function mountTypeGroup({ type, containerId, initialWeights = {}, onWeigh
   }
 
   function setEnabled(key, checked) {
-    // Mutual exclusion: une seule option active par type
     const item = itemByKey[key];
 
+    // ── Mode multi-sélection (murs uniquement) ──────────────────
+    if (isMultiSelect) {
+      if (item && item.isGroup) {
+        // Pour les murs : clic sur un groupe = juste ouvrir/fermer
+        state.open[key] = !state.open[key];
+        updateGroupStates();
+        syncUI();
+        return;
+      }
+      // Feuille : basculer l'activation indépendamment
+      if (checked) {
+        state.enabled[key] = true;
+        // Conserver le poids existant ou démarrer à 100
+        if (!state.weights[key]) state.weights[key] = 100;
+      } else {
+        const enabledLeaves = flatKeys.filter(k => state.enabled[k]);
+        if (enabledLeaves.length === 1 && enabledLeaves[0] === key) return syncUI();
+        state.enabled[key] = false;
+        state.weights[key] = 0;
+      }
+      updateGroupStates();
+      syncUI();
+      onWeightsChange(type, state.weights);
+      return;
+    }
+
+    // ── Mode sélection unique (tous les autres types) ───────────
     if (item && item.isGroup) {
       // trouver la première feuille récursivement
       function firstLeafKey(children) {
