@@ -239,6 +239,10 @@ body.ui-collapsed #uiToggle {
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.14);
 }
+body.ui-collapsed #helpBtn {
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.14);
+}
 body.ui-collapsed #uiToggle .toggle-arrow {
   transform: rotate(-90deg);
 }
@@ -259,11 +263,17 @@ body.embed-ui-hidden #topbar {
   #panel label { font-size: 12px; }
 }
 
+/* ── Rangée onglet + aide ───────────────────────────────────── */
+#tab-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 4px;
+}
+
 /* ── Bouton d'aide + tooltip ──────────────────────────────── */
 #help-wrapper {
-  position: fixed;
-  right: 12px;
-  bottom: calc(12px + env(safe-area-inset-bottom));
+  position: relative;
   z-index: 200;
 }
 #helpBtn {
@@ -272,8 +282,9 @@ body.embed-ui-hidden #topbar {
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 10px 10px 0 0;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-bottom: none;
   background: rgba(16,18,22,0.72);
   color: rgba(255,255,255,0.75);
   font-size: 14px;
@@ -289,7 +300,7 @@ body.embed-ui-hidden #topbar {
   display: none;
   position: absolute;
   bottom: calc(100% + 8px);
-  right: 0;
+  left: 0;
   width: 220px;
   padding: 12px 14px;
   background: rgba(12,16,22,0.92);
@@ -323,24 +334,25 @@ body.embed-ui-hidden #topbar {
   <body>
 <div id="app"></div>
 
-    <div id="help-wrapper">
-      <button id="helpBtn" aria-label="Aide navigation" title="Aide navigation">?</button>
-      <div id="help-tooltip" role="tooltip">
-        <div class="help-title">Navigation</div>
-        <table>
-          <tr><td>🖱 Bouton gauche</td><td>Tourner</td></tr>
-          <tr><td>🖱 Bouton droit</td><td>Déplacer</td></tr>
-          <tr><td>🖱 Molette</td><td>Zoomer</td></tr>
-          <tr><td>☝ 1 doigt</td><td>Tourner</td></tr>
-          <tr><td>✌ 2 doigts</td><td>Zoom / déplacer</td></tr>
-        </table>
-      </div>
-    </div>
-
     <div id="panel-wrapper">
-      <button id="uiToggle" aria-expanded="true" aria-controls="panel">
-        Textures <span class="toggle-arrow">▼</span>
-      </button>
+      <div id="tab-row">
+        <div id="help-wrapper">
+          <button id="helpBtn" aria-label="Aide navigation" title="Aide navigation">?</button>
+          <div id="help-tooltip" role="tooltip">
+            <div class="help-title">Navigation</div>
+            <table>
+              <tr><td>🖱 Bouton gauche</td><td>Tourner</td></tr>
+              <tr><td>🖱 Bouton droit</td><td>Déplacer</td></tr>
+              <tr><td>🖱 Molette</td><td>Zoomer</td></tr>
+              <tr><td>☝ 1 doigt</td><td>Tourner</td></tr>
+              <tr><td>✌ 2 doigts</td><td>Zoom / déplacer</td></tr>
+            </table>
+          </div>
+        </div>
+        <button id="uiToggle" aria-expanded="true" aria-controls="panel">
+          Textures <span class="toggle-arrow">▼</span>
+        </button>
+      </div>
       <div id="panel">
       <h2>Textures</h2>
 
