@@ -266,13 +266,6 @@ export function createPavillonHouse(matsByType) {
     const canopy = new THREE.Mesh(new THREE.BoxGeometry(canopyW, 0.08, canopyDepth), matsByType.couverture);
     canopy.position.set(0, doorH + 0.22, D / 2 + canopyDepth / 2);
     root.add(canopy);
-
-    // Montants de l'auvent
-    [-1, 1].forEach((s) => {
-      const post = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.55, 0.07), matsByType.linteau);
-      post.position.set(s * (canopyW / 2 - 0.05), doorH - 0.06, D / 2 + canopyDepth - 0.05);
-      root.add(post);
-    });
   }
 
   return root;
