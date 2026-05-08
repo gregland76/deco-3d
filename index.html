@@ -535,6 +535,7 @@
         captureWrap.appendChild(frame);
         thumbTimer = setTimeout(() => { frame.remove(); nextThumb(); }, 12000);
       }
+      
 
       window.addEventListener("message", (event) => {
         if (event.origin !== location.origin) return;
