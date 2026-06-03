@@ -27,12 +27,39 @@ Paramètre d'URL `variant` sur `3D.html` :
 
 ## Paramètres d'URL (`3D.html`)
 
+### Généraux
+
 | Paramètre | Valeur | Description |
 |-----------|--------|-------------|
 | `variant` | `pavillon` \| `maitre` | Choix de la maison (défaut : `classic`) |
 | `showUi` | `1` | Force l'affichage du panneau de textures (utile en mode embed) |
 | `embed` | `1` | Mode intégré — masque l'UI au démarrage |
 | `capture` | `1` | Mode capture — envoie un screenshot JPEG via `postMessage` après chargement |
+
+### Matériaux
+
+Chaque surface peut être pré-sélectionnée via un paramètre d'URL. Le format est :
+
+```
+?<surface>=<clé>            # sélection simple  (poids 100%)
+?<surface>=<clé>:<poids>,...  # multi-sélection avec pondération (murs uniquement)
+```
+
+| Paramètre | Clés disponibles | Description |
+|-----------|-----------------|-------------|
+| `walls` | `w0` Silex · `w1` Brique · `w2` Pierre calcaire taillée · `w3` Colombage · `w5` Bardeaux · `w6` Tuile sable · `w8` Moellon calcaire · `w9` Tuile brun · `w10` Tuile rouge | Murs (multi-sélection possible) |
+| `floors` | `w3` Parquet bois | Sol |
+| `couverture` | `w3` Bois · `w4` Ardoise · `w5` Bardeaux · `w6` Tuile sable · `w7` Chaume · `w9` Tuile brun · `w10` Tuile rouge | Toiture |
+| `linteau` | `w0` Bois · `w1` Pierre · `w2` Brique · `w3` IPN | Linteaux |
+| `menuiserie` | `w0` Bois naturel · `w1-w4` Bois peint (bleu/rouge/vert/beige) · `w5` Alu brut · `w6-w9` Alu teinté (bleu/rouge/vert/beige) | Menuiseries |
+
+**Exemples :**
+
+```
+3D.html?variant=maitre&couverture=w7&menuiserie=w6
+3D.html?walls=w1:30,w2:70&linteau=w1
+3D.html?walls=w0&couverture=w4&linteau=w2&menuiserie=w5
+```
 
 ## Matériaux
 

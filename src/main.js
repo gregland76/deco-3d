@@ -20,6 +20,33 @@ const embedMode = searchParams.get("embed") === "1";
 const houseVariant = searchParams.get("variant") ?? "classic";
 const captureMode = searchParams.get("capture") === "1";
 
+// Parsing des paramètres d'URL pour les matériaux
+// Format : ?walls=w1  ou  ?walls=w1:60,w3:40  (multi avec pondération)
+function parseMaterialParam(value) {
+  if (!value) return null;
+  const weights = {};
+  for (const part of value.split(',')) {
+    const [key, val] = part.split(':');
+    if (/^w\d+$/.test(key)) {
+      weights[key] = val !== undefined ? Number(val) : 100;
+    }
+  }
+  return Object.keys(weights).length ? weights : null;
+}
+
+const urlMaterialWeights = {};
+for (const type of ['walls', 'floors', 'couverture', 'linteau', 'menuiserie']) {
+  const parsed = parseMaterialParam(searchParams.get(type));
+  if (parsed) urlMaterialWeights[type] = parsed;
+}
+
+const INITIAL_WEIGHTS = Object.fromEntries(
+  Object.keys(DEFAULT_WEIGHTS).map((type) => [
+    type,
+    urlMaterialWeights[type] ?? DEFAULT_WEIGHTS[type],
+  ])
+);
+
 // applyWeightsToMat will be defined later (after layeredSet is built)
 
 const app = document.getElementById("app");
@@ -284,10 +311,10 @@ const mapsByType = {
 
 Object.entries(matsByType).forEach(([type, mat]) => {
   if (type === "linteau") return; // géré séparément par applyLinteauWeights
-  applyWeightsToMat(mat, DEFAULT_WEIGHTS[type], mapsByType[type]);
+  applyWeightsToMat(mat, INITIAL_WEIGHTS[type], mapsByType[type]);
 });
-applyLinteauWeights(DEFAULT_WEIGHTS.linteau);
-applyMenuiserieWeights(DEFAULT_WEIGHTS.menuiserie);
+applyLinteauWeights(INITIAL_WEIGHTS.linteau);
+applyMenuiserieWeights(INITIAL_WEIGHTS.menuiserie);
 
 // Tooltip de debug supprimé (affiché précédemment en bas à droite)
 // Si nécessaire, réactiver manuellement la fonction de debugFloorMap.
@@ -333,7 +360,7 @@ groups.push(
   mountTypeGroup({
     type: "walls",
     containerId: "group-walls",
-    initialWeights: DEFAULT_WEIGHTS.walls,
+    initialWeights: INITIAL_WEIGHTS.walls,
       onWeightsChange: (type, w) => applyWeightsToMat(matsByType[type], w, mapsByType[type]),
   })
 );
@@ -341,7 +368,7 @@ groups.push(
   mountTypeGroup({
     type: "floors",
     containerId: "group-floors",
-    initialWeights: DEFAULT_WEIGHTS.floors,
+    initialWeights: INITIAL_WEIGHTS.floors,
       onWeightsChange: (type, w) => applyWeightsToMat(matsByType[type], w, mapsByType[type]),
   })
 );
@@ -349,7 +376,7 @@ groups.push(
   mountTypeGroup({
     type: "couverture",
     containerId: "group-couverture",
-    initialWeights: DEFAULT_WEIGHTS.couverture,
+    initialWeights: INITIAL_WEIGHTS.couverture,
       onWeightsChange: (type, w) => applyWeightsToMat(matsByType[type], w, mapsByType[type]),
   })
 );
@@ -357,7 +384,7 @@ groups.push(
   mountTypeGroup({
     type: "linteau",
     containerId: "group-linteau",
-    initialWeights: DEFAULT_WEIGHTS.linteau,
+    initialWeights: INITIAL_WEIGHTS.linteau,
       onWeightsChange: (_type, w) => applyLinteauWeights(w),
   })
 );
@@ -365,7 +392,7 @@ groups.push(
   mountTypeGroup({
     type: "menuiserie",
     containerId: "group-menuiserie",
-    initialWeights: DEFAULT_WEIGHTS.menuiserie,
+    initialWeights: INITIAL_WEIGHTS.menuiserie,
       onWeightsChange: (_type, w) => applyMenuiserieWeights(w),
   })
 );
